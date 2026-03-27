@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db, AuditEntry, FixedRule } from '../lib/firebase';
-import MoodLedger from './MoodLedger';
+import Auditor from './Auditor';
 import SafetyMeter from './SafetyMeter';
 import BehavioralHistory from './BehavioralHistory';
 import FixedExpenses from './FixedExpenses';
-import { LogOut, Brain, Wallet, Sparkles } from 'lucide-react';
+import { LogOut, Brain, Wallet, ShieldCheck } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth();
@@ -149,20 +149,25 @@ export default function Dashboard() {
           className="rounded-2xl p-5 mb-7 flex items-center gap-4 shadow-md"
           style={{ background: 'linear-gradient(135deg, var(--stormyTeal), #004d57)', color: 'white' }}
         >
-          <Sparkles className="w-8 h-8 flex-shrink-0" style={{ color: 'var(--almondSilk)' }} />
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner"
+            style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}
+          >
+            <ShieldCheck className="w-7 h-7" style={{ color: 'var(--almondSilk)' }} />
+          </div>
           <div>
             <h2 className="text-lg font-bold">
               Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
             </h2>
             <p className="text-sm opacity-80">
-              Track your emotions, audit your spending, and build mindful financial habits.
+              Your Auditor is ready — track spending, audit emotions, stay financially mindful.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <MoodLedger onEntryAdded={loadData} fixedRules={fixedRules} />
+            <Auditor onEntryAdded={loadData} fixedRules={fixedRules} />
             <BehavioralHistory entries={auditEntries} />
           </div>
           <div className="space-y-6">
