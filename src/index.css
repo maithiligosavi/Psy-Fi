@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties ─────────────────────────────────────────────────── */
+:root {
+  --stormyTeal:    #006d77;
+  --pearlAqua:     #83c5be;
+  --aliceBlue:     #edf6f9;
+  --almondSilk:    #ffddd2;
+  --tangerineDream:#e29578;
+}
+
+/* ── 3D Flip Card Utilities ─────────────────────────────────────────────────── */
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ── Custom Scrollbar ───────────────────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0,109,119,0.1);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--pearlAqua);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--stormyTeal);
+}
+
+/* ── Glassmorphism helper ───────────────────────────────────────────────────── */
+.glass {
+  background: rgba(237, 246, 249, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(131, 197, 190, 0.25);
+}
+
+.glass-dark {
+  background: rgba(0, 109, 119, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(131, 197, 190, 0.3);
+}
