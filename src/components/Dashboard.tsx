@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db, AuditEntry, FixedRule } from '../lib/firebase';
-import Auditor from './Auditor';
+import ExpenseTracker from './ExpenseTracker';
 import SafetyMeter from './SafetyMeter';
 import BehavioralHistory from './BehavioralHistory';
 import FixedExpenses from './FixedExpenses';
@@ -98,7 +98,7 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-xl font-extrabold text-white tracking-tight">Psy-Fi</h1>
                 <p className="text-xs font-medium" style={{ color: 'var(--pearlAqua)' }}>
-                  Mindful Finance Auditor
+                  Mindful Finance Expense Tracker
                 </p>
               </div>
             </div>
@@ -160,14 +160,14 @@ export default function Dashboard() {
               Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
             </h2>
             <p className="text-sm opacity-80">
-              Your Auditor is ready — track spending, audit emotions, stay financially mindful.
+              Your Expense Tracker is ready — track spending, audit emotions, stay financially mindful.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Auditor onEntryAdded={loadData} fixedRules={fixedRules} />
+            <ExpenseTracker onEntryAdded={loadData} fixedRules={fixedRules} />
             <BehavioralHistory entries={auditEntries} />
           </div>
           <div className="space-y-6">

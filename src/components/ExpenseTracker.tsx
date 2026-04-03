@@ -30,14 +30,14 @@ const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Ot
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface AuditorProps {
+interface ExpenseTrackerProps {
   onEntryAdded: () => void;
   fixedRules: FixedRule[];
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
+export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrackerProps) {
   const { user } = useAuth();
 
   // ── Form state ───────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
         </div>
         <div>
           <h2 className="text-xl font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
-            Auditor
+            Expense Tracker
           </h2>
           <p className="text-sm" style={{ color: 'var(--pearlAqua)' }}>Audit your emotional spending</p>
         </div>
