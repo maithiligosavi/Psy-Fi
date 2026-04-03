@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-  collection, addDoc, query, where, getDocs,
+  collection, addDoc,
   doc, getDoc, setDoc, arrayUnion,
 } from 'firebase/firestore';
-import { db, FixedRule } from '../lib/firebase';
+import { db, FixedRule, AuditEntry } from '../lib/firebase';
+import { analyseEntry } from '../lib/insightEngine';
 import { useAuth } from '../hooks/useAuth';
 import {
   Smile, Meh, Frown, TrendingDown, TrendingUp,
@@ -33,11 +34,12 @@ const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Ot
 interface AuditorProps {
   onEntryAdded: () => void;
   fixedRules: FixedRule[];
+  auditEntries: AuditEntry[];
 }
 
 // Component
 
-export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
+export default function Auditor({ onEntryAdded, fixedRules, auditEntries }: AuditorProps) {
   const { user } = useAuth();
 
   // ── Form state ───────────────────────────────────────────────────────────
@@ -97,23 +99,27 @@ export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
     loadSettings();
   }, [user]);
 
-  //  Unpaid fixed-spend check 
-  const checkUnpaidFixed = async () => {
+  //  Unpaid fixed-spend check — now pure, synchronous, and local
+  const checkUnpaidFixed = () => {
     if (!user || fixedRules.length === 0) return;
     const now        = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const q = query(
-      collection(db, 'audit_entries'),
-      where('user_id', '==', user.uid),
-      where('purchase_date', '>=', monthStart)
-    );
-    const snap = await getDocs(q);
-    const paidThisMonth = snap.docs.map((d) => d.data().product_service?.toLowerCase() ?? '');
+    const monthYear  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Filter existing entries in memory — no network call!
+    const paidThisMonth = auditEntries
+      .filter((e: AuditEntry) => e.purchase_date.startsWith(monthYear))
+      .map((e: AuditEntry) => e.product_service?.toLowerCase() ?? '');
+
     const unpaid = fixedRules.filter(
-      (r) => !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
+      (r: FixedRule) => !paidThisMonth.some((p: string) => p.includes(r.expense_name.toLowerCase()))
     );
     setUnpaidWarning(unpaid.map((r) => r.expense_name));
   };
+
+  // Keep the warning updated whenever entries or rules change
+  useEffect(() => {
+    checkUnpaidFixed();
+  }, [auditEntries, fixedRules]);
 
   //  Add custom category 
   const handleAddCategory = async () => {
@@ -185,8 +191,7 @@ export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
     setSuccess(false);
 
     try {
-     
-      await checkUnpaidFixed();
+      // No more blocking checkUnpaidFixed() here — the useEffect handles it!
 
     
       if (sourceOfPayment === 'Other' && finalSource) {
@@ -194,16 +199,30 @@ export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
       }
 
       
-      await addDoc(collection(db, 'audit_entries'), {
-        user_id:           user.uid,
-        product_service:   productService.trim(),
-        amount:            parseFloat(amount),
-        spending_category: finalCategory,   
-        reason:            reason.trim(),
+      // ── Run the Psychological Insights Engine ──
+      const insight = analyseEntry({
         mood,
-        source_of_payment: finalSource,     
-        purchase_date:     new Date().toISOString(),
-        created_at:        new Date().toISOString(),
+        spending_type: undefined,   // spending_type not in form — engine works without it
+        amount: parseFloat(amount),
+        reason: reason.trim(),
+        spending_category: finalCategory,
+      });
+
+      await addDoc(collection(db, 'audit_entries'), {
+        user_id:                user.uid,
+        product_service:        productService.trim(),
+        amount:                 parseFloat(amount),
+        spending_category:      finalCategory,
+        reason:                 reason.trim(),
+        mood,
+        source_of_payment:      finalSource,
+        purchase_date:          new Date().toISOString(),
+        created_at:             new Date().toISOString(),
+        // Insight fields
+        insight_summary:        insight.summary,
+        insight_triggers:       insight.triggers,
+        insight_risk:           insight.risk,
+        insight_recommendation: insight.recommendation,
       });
 
       
@@ -285,7 +304,6 @@ export default function Auditor({ onEntryAdded, fixedRules }: AuditorProps) {
             type="text"
             value={productService}
             onChange={(e) => setProductService(e.target.value)}
-            onFocus={checkUnpaidFixed}
             className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all"
             style={inputStyle}
             placeholder="What did you buy?"

@@ -39,6 +39,11 @@ export interface AuditEntry {
   notification_message?: string;
   notification_type?: string;
   created_at: string;
+  // ── Psychological Insight Engine fields ──────────────────────────────────────
+  insight_summary?: string;       // headline analysis sentence
+  insight_triggers?: string[];    // detected behavioural triggers
+  insight_risk?: 'Low' | 'Medium' | 'High';
+  insight_recommendation?: string;
 }
 
 export interface FixedRule {
@@ -51,6 +56,18 @@ export interface FixedRule {
   category: string;
   is_paid?: boolean;
   created_at: string;
+}
+
+export interface SpendingReport {
+  id?: string;
+  user_id: string;
+  period: 'Weekly' | 'Monthly' | 'Annual';
+  period_key: string;           // e.g. "2026-04" | "2026-W14" | "2026"
+  total_spent: number;
+  entry_count: number;
+  top_category: string;
+  category_breakdown: Record<string, number>;
+  saved_at: string;
 }
 
 // ─── Indian Currency Formatter ────────────────────────────────────────────────
