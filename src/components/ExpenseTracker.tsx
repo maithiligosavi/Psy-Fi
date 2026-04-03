@@ -10,7 +10,7 @@ import {
   AlertTriangle, ShieldCheck, Plus, X,
 } from 'lucide-react';
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// Constants 
 
 const MOODS = [
   { value: 'Happy',    icon: Smile,        color: '#10b981' },
@@ -28,14 +28,14 @@ const DEFAULT_CATEGORIES = [
 
 const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Other'];
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types 
 
 interface ExpenseTrackerProps {
   onEntryAdded: () => void;
   fixedRules: FixedRule[];
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrackerProps) {
   const { user } = useAuth();
@@ -53,16 +53,16 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
   const [success, setSuccess]                 = useState(false);
   const [unpaidWarning, setUnpaidWarning]     = useState<string[]>([]);
 
-  // ── Dynamic categories ───────────────────────────────────────────────────
+  //  Dynamic categories
   const [allCategories, setAllCategories]         = useState<string[]>(DEFAULT_CATEGORIES);
   const [showAddCategory, setShowAddCategory]     = useState(false);
   const [newCategoryInput, setNewCategoryInput]   = useState('');
   const [savingCategory, setSavingCategory]       = useState(false);
 
-  // ── Dynamic payment sources ──────────────────────────────────────────────
+  // Dynamic payment sources 
   const [allPaymentSources, setAllPaymentSources] = useState<string[]>(DEFAULT_PAYMENT_SOURCES);
 
-  // ── Load user settings (custom categories + custom payment sources) ──────
+  //Load user settings (custom categories + custom payment sources) 
   useEffect(() => {
     if (!user) return;
     const loadSettings = async () => {
@@ -97,7 +97,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     loadSettings();
   }, [user]);
 
-  // ── Unpaid fixed-spend check ─────────────────────────────────────────────
+  //  Unpaid fixed-spend check 
   const checkUnpaidFixed = async () => {
     if (!user || fixedRules.length === 0) return;
     const now        = new Date();
@@ -115,7 +115,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     setUnpaidWarning(unpaid.map((r) => r.expense_name));
   };
 
-  // ── Add custom category ──────────────────────────────────────────────────
+  //  Add custom category 
   const handleAddCategory = async () => {
     const trimmed = newCategoryInput.trim();
     if (!trimmed || !user) return;
@@ -144,7 +144,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     }
   };
 
-  // ── Save custom payment source (accepts explicit value to avoid stale closure) ──
+  // Save custom payment source 
   const saveCustomSource = async (value: string) => {
     if (!value || !user) return;
     // Skip if it's already a known source (default or previously saved)
@@ -163,18 +163,18 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     }
   };
 
-  // ── Submit ───────────────────────────────────────────────────────────────
+  //  Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    // ── 1. Resolve the exact strings that will go into Firestore ────────
-    //    These are derived once, before any async work, so they are stable.
+    
+    
     const finalCategory: string = category.trim();
     const finalSource: string   =
       sourceOfPayment === 'Other' ? sourceOfPaymentOther.trim() : sourceOfPayment;
 
-    // Guard: custom "Other" source must not be empty
+    
     if (sourceOfPayment === 'Other' && !finalSource) {
       setError('Please enter a custom payment source.');
       return;
@@ -185,29 +185,28 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     setSuccess(false);
 
     try {
-      // ── 2. Check unpaid fixed expenses (non-blocking, informational) ──
+     
       await checkUnpaidFixed();
 
-      // ── 3. Persist new custom payment source to user_settings ─────────
-      //    We pass finalSource explicitly — no stale-closure risk.
+    
       if (sourceOfPayment === 'Other' && finalSource) {
         await saveCustomSource(finalSource);
       }
 
-      // ── 4. Write the audit entry — custom strings stored verbatim ─────
+      
       await addDoc(collection(db, 'audit_entries'), {
         user_id:           user.uid,
         product_service:   productService.trim(),
         amount:            parseFloat(amount),
-        spending_category: finalCategory,   // exact user string (custom or default)
+        spending_category: finalCategory,   
         reason:            reason.trim(),
         mood,
-        source_of_payment: finalSource,     // exact user string (custom or default)
+        source_of_payment: finalSource,     
         purchase_date:     new Date().toISOString(),
         created_at:        new Date().toISOString(),
       });
 
-      // ── 5. Reset form ─────────────────────────────────────────────────
+      
       setSuccess(true);
       setProductService('');
       setAmount('');
@@ -226,14 +225,14 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     }
   };
 
-  // ── Styles ───────────────────────────────────────────────────────────────
+
   const inputStyle: React.CSSProperties = {
     background:  'rgba(237,246,249,0.8)',
     borderColor: 'var(--pearlAqua)',
     color:       'var(--stormyTeal)',
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
+ 
   return (
     <div
       className="rounded-2xl p-6 shadow-lg border"
