@@ -160,7 +160,7 @@ export default function Dashboard() {
               Welcome back, {profile?.name?.split(' ')[0] || 'there'}! 👋
             </h2>
             <p className="text-sm opacity-80">
-              Your Auditor is ready — track spending, audit emotions, stay financially mindful.
+              Your Auditor is ready. Track spending, audit emotions, stay financially mindful.
             </p>
           </div>
         </div>
