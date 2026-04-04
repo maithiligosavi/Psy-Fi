@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ────────────────────────────────────────────────────────
+
+    // Returns true if the currently authenticated user has role === 'admin'
+    // in their own profile document.
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Returns true if the request is made by the authenticated user themselves.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── profiles ────────────────────────────────────────────────────────────────
+    // Stores: name, email, role, created_at
+    match /profiles/{userId} {
+      // Users can read and write their own profile.
+      // Admins can read any profile (needed for the user management table).
+      allow read: if isOwner(userId) || isAdmin();
+
+      // A user can create their own profile doc on sign-up.
+      // A user can update their own profile, but CANNOT escalate their own role.
+      allow create: if isOwner(userId)
+        && request.resource.data.role == 'user';
+
+      allow update: if isOwner(userId)
+        && request.resource.data.role == resource.data.role;
+
+      // Only admins may delete profiles.
+      allow delete: if isAdmin();
+    }
+
+    // ── audit_entries ───────────────────────────────────────────────────────────
+    // Stores: user_id, product_service, amount, spending_category, reason,
+    //         mood, source_of_payment, purchase_date, created_at
+    match /audit_entries/{entryId} {
+      // Owners can read/write their own entries.
+      // Admins can read all entries (for platform-wide analytics)
+      // but CANNOT write, create, or delete individual entries.
+      allow read: if isOwner(resource.data.user_id) || isAdmin();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update, delete: if isOwner(resource.data.user_id);
+    }
+
+    // ── fixed_rules ─────────────────────────────────────────────────────────────
+    // Stores recurring expense rules — strictly private to the owner.
+    match /fixed_rules/{ruleId} {
+      allow read, write: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
+    }
+
+    // ── user_settings ────────────────────────────────────────────────────────────
+    // Stores: custom_categories, custom_payment_sources — strictly private.
+    match /user_settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+  }
+}

@@ -16,12 +16,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+//  Types 
 
 export interface Profile {
   id: string;
   name: string;
   email: string;
+  role: 'user' | 'admin';
   created_at: string;
 }
 
@@ -53,7 +54,7 @@ export interface FixedRule {
   created_at: string;
 }
 
-// ─── Indian Currency Formatter ────────────────────────────────────────────────
+//  Indian Currency Formatter 
 
 export const formatINR = (amount: number): string =>
   new Intl.NumberFormat('en-IN', {

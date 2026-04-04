@@ -13,12 +13,12 @@ import {
 // Constants 
 
 const MOODS = [
-  { value: 'Happy',    icon: Smile,        color: '#10b981' },
-  { value: 'Neutral',  icon: Meh,          color: '#f59e0b' },
-  { value: 'Sad',      icon: Frown,        color: '#60a5fa' },
+  { value: 'Happy', icon: Smile, color: '#10b981' },
+  { value: 'Neutral', icon: Meh, color: '#f59e0b' },
+  { value: 'Sad', icon: Frown, color: '#60a5fa' },
   { value: 'Stressed', icon: TrendingDown, color: '#ef4444' },
-  { value: 'Excited',  icon: TrendingUp,   color: '#a855f7' },
-  { value: 'Bored',    icon: Meh,          color: '#94a3b8' },
+  { value: 'Excited', icon: TrendingUp, color: '#a855f7' },
+  { value: 'Bored', icon: Meh, color: '#94a3b8' },
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -40,24 +40,24 @@ interface ExpenseTrackerProps {
 export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrackerProps) {
   const { user } = useAuth();
 
-  // ── Form state ───────────────────────────────────────────────────────────
-  const [productService, setProductService]   = useState('');
-  const [amount, setAmount]                   = useState('');
-  const [category, setCategory]               = useState('Food & Dining');
-  const [reason, setReason]                   = useState('');
-  const [mood, setMood]                       = useState('Neutral');
+  //  Form state 
+  const [productService, setProductService] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('Food & Dining');
+  const [reason, setReason] = useState('');
+  const [mood, setMood] = useState('Neutral');
   const [sourceOfPayment, setSourceOfPayment] = useState('GPay');
   const [sourceOfPaymentOther, setSourceOfPaymentOther] = useState('');
-  const [loading, setLoading]                 = useState(false);
-  const [error, setError]                     = useState('');
-  const [success, setSuccess]                 = useState(false);
-  const [unpaidWarning, setUnpaidWarning]     = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [unpaidWarning, setUnpaidWarning] = useState<string[]>([]);
 
   //  Dynamic categories
-  const [allCategories, setAllCategories]         = useState<string[]>(DEFAULT_CATEGORIES);
-  const [showAddCategory, setShowAddCategory]     = useState(false);
-  const [newCategoryInput, setNewCategoryInput]   = useState('');
-  const [savingCategory, setSavingCategory]       = useState(false);
+  const [allCategories, setAllCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [savingCategory, setSavingCategory] = useState(false);
 
   // Dynamic payment sources 
   const [allPaymentSources, setAllPaymentSources] = useState<string[]>(DEFAULT_PAYMENT_SOURCES);
@@ -100,7 +100,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
   //  Unpaid fixed-spend check 
   const checkUnpaidFixed = async () => {
     if (!user || fixedRules.length === 0) return;
-    const now        = new Date();
+    const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const q = query(
       collection(db, 'audit_entries'),
@@ -168,13 +168,13 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     e.preventDefault();
     if (!user) return;
 
-    
-    
+
+
     const finalCategory: string = category.trim();
-    const finalSource: string   =
+    const finalSource: string =
       sourceOfPayment === 'Other' ? sourceOfPaymentOther.trim() : sourceOfPayment;
 
-    
+
     if (sourceOfPayment === 'Other' && !finalSource) {
       setError('Please enter a custom payment source.');
       return;
@@ -185,28 +185,28 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     setSuccess(false);
 
     try {
-     
+
       await checkUnpaidFixed();
 
-    
+
       if (sourceOfPayment === 'Other' && finalSource) {
         await saveCustomSource(finalSource);
       }
 
-      
+
       await addDoc(collection(db, 'audit_entries'), {
-        user_id:           user.uid,
-        product_service:   productService.trim(),
-        amount:            parseFloat(amount),
-        spending_category: finalCategory,   
-        reason:            reason.trim(),
+        user_id: user.uid,
+        product_service: productService.trim(),
+        amount: parseFloat(amount),
+        spending_category: finalCategory,
+        reason: reason.trim(),
         mood,
-        source_of_payment: finalSource,     
-        purchase_date:     new Date().toISOString(),
-        created_at:        new Date().toISOString(),
+        source_of_payment: finalSource,
+        purchase_date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
 
-      
+
       setSuccess(true);
       setProductService('');
       setAmount('');
@@ -227,12 +227,12 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
 
 
   const inputStyle: React.CSSProperties = {
-    background:  'rgba(237,246,249,0.8)',
+    background: 'rgba(237,246,249,0.8)',
     borderColor: 'var(--pearlAqua)',
-    color:       'var(--stormyTeal)',
+    color: 'var(--stormyTeal)',
   };
 
- 
+
   return (
     <div
       className="rounded-2xl p-6 shadow-lg border"
@@ -336,8 +336,8 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                 className="w-11 h-11 flex items-center justify-center rounded-xl border-2 flex-shrink-0 transition-all hover:scale-105"
                 style={{
                   borderColor: showAddCategory ? 'var(--stormyTeal)' : 'var(--pearlAqua)',
-                  background:  showAddCategory ? 'var(--stormyTeal)' : 'rgba(237,246,249,0.8)',
-                  color:       showAddCategory ? 'white' : 'var(--stormyTeal)',
+                  background: showAddCategory ? 'var(--stormyTeal)' : 'rgba(237,246,249,0.8)',
+                  color: showAddCategory ? 'white' : 'var(--stormyTeal)',
                 }}
               >
                 {showAddCategory ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -389,12 +389,12 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                     : { background: 'rgba(237,246,249,0.7)', color: 'var(--stormyTeal)', borderColor: 'var(--pearlAqua)' }
                 }
               >
-                {src === 'GPay'    ? '🟢' :
-                 src === 'Paytm'   ? '🔵' :
-                 src === 'PhonePe' ? '🟣' :
-                 src === 'Cash'    ? '💵' :
-                 src === 'Card'    ? '💳' :
-                 src === 'Other'   ? '📝' : '💰'} {src}
+                {src === 'GPay' ? '🟢' :
+                  src === 'Paytm' ? '🔵' :
+                    src === 'PhonePe' ? '🟣' :
+                      src === 'Cash' ? '💵' :
+                        src === 'Card' ? '💳' :
+                          src === 'Other' ? '📝' : '💰'} {src}
               </button>
             ))}
           </div>
@@ -430,7 +430,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                   className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all border-2"
                   style={{
                     borderColor: isSelected ? m.color : 'var(--pearlAqua)',
-                    background:  isSelected ? `${m.color}18` : 'rgba(237,246,249,0.5)',
+                    background: isSelected ? `${m.color}18` : 'rgba(237,246,249,0.5)',
                   }}
                 >
                   <Icon className="w-5 h-5" style={{ color: m.color }} />

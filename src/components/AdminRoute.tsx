@@ -1,11 +1,19 @@
-import { AuthProvider } from './hooks/useAuth';
-import { useAuth } from './hooks/useAuth';
-import Auth from './components/Auth';
-import Dashboard from './components/Dashboard';
-import AdminRoute from './components/AdminRoute';
-import AdminDashboard from './components/AdminDashboard';
+import { ReactNode } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import Auth from './Auth';
 
-function AppContent() {
+interface AdminRouteProps {
+  children: ReactNode;
+}
+
+/**
+ * AdminRoute — wraps any route that requires admin access.
+ *
+ * While auth is loading → shows the same spinner used in App.tsx.
+ * If the user is not authenticated or not an admin → renders <Auth />.
+ * If the user is an admin → renders children.
+ */
+export default function AdminRoute({ children }: AdminRouteProps) {
   const { user, role, loading } = useAuth();
 
   if (loading) {
@@ -25,38 +33,17 @@ function AppContent() {
             </svg>
           </div>
           <div className="text-lg font-bold" style={{ color: 'var(--stormyTeal)' }}>
-            Loading Psy-Fi…
-          </div>
-          <div className="text-sm" style={{ color: 'var(--pearlAqua)' }}>
-            Preparing your mindful finance dashboard
+            Verifying access…
           </div>
         </div>
       </div>
     );
   }
 
-  // Not authenticated → show login / sign-up screen.
-  if (!user) return <Auth />;
-
-  // Admin user → protected admin dashboard.
-  if (role === 'admin') {
-    return (
-      <AdminRoute>
-        <AdminDashboard />
-      </AdminRoute>
-    );
+  // Not logged in, or not an admin → fall back to the Auth screen.
+  if (!user || role !== 'admin') {
+    return <Auth />;
   }
 
-  // Regular authenticated user → standard dashboard.
-  return <Dashboard />;
+  return <>{children}</>;
 }
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-export default App;

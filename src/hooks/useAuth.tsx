@@ -12,6 +12,7 @@ import { auth, db, Profile } from '../lib/firebase';
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  role: 'user' | 'admin' | null;
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<'user' | 'admin' | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (userId: string) => {
@@ -30,7 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const docRef = doc(db, 'profiles', userId);
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        setProfile({ id: snap.id, ...snap.data() } as Profile);
+        const data = snap.data();
+        const loaded: Profile = {
+          id: snap.id,
+          name: data.name ?? '',
+          email: data.email ?? '',
+          role: data.role ?? 'user',
+          created_at: data.created_at ?? new Date().toISOString(),
+        };
+        setProfile(loaded);
+        setRole(loaded.role);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -46,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadProfile(firebaseUser.uid);
       } else {
         setProfile(null);
+        setRole(null);
         setLoading(false);
       }
     });
@@ -57,13 +69,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setDoc(doc(db, 'profiles', newUser.uid), {
       name,
       email,
+      role: 'user', // all new accounts default to regular user
       created_at: serverTimestamp(),
     });
-    setProfile({ id: newUser.uid, name, email, created_at: new Date().toISOString() });
+    const newProfile: Profile = {
+      id: newUser.uid,
+      name,
+      email,
+      role: 'user',
+      created_at: new Date().toISOString(),
+    };
+    setProfile(newProfile);
+    setRole('user');
   };
 
   const signIn = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
+    // Profile & role are loaded by the onAuthStateChanged listener above.
   };
 
   const signOut = async () => {
@@ -71,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, role, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
