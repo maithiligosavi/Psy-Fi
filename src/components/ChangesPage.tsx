@@ -173,7 +173,7 @@ export default function ChangesPage() {
         {/* Page header */}
         <div
           className="rounded-2xl p-6 mb-7 shadow-md"
-          style={{ background: 'linear-gradient(135deg, #3b0764, #6b21a8)', color: 'white' }}
+          style={{ background: 'linear-gradient(135deg, #006d77)', color: 'white' }}
         >
           <div className="flex items-start gap-4">
             <div
@@ -272,7 +272,7 @@ export default function ChangesPage() {
               className="grid gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wide"
               style={{
                 gridTemplateColumns: '2fr 0.9fr 0.85fr 1fr 1fr',
-                background: 'linear-gradient(135deg, #3b0764, #6b21a8)',
+                background: 'linear-gradient(135deg, #006d77)',
                 color: 'white',
               }}
             >
