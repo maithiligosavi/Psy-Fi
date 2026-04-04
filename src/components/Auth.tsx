@@ -79,7 +79,7 @@ export default function Auth() {
             Psy-Fi
           </h1>
           <p className="text-base font-medium" style={{ color: 'var(--pearlAqua)' }}>
-            Mindful Finance · Psychological Spending Auditor
+            Mindful Finance · Psychological Spending Expense Tracker
           </p>
 
           {/* Feature pills */}
