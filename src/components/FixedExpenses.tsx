@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, FixedRule, formatINR } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Calendar, Trash2, Plus, IndianRupee } from 'lucide-react';
+import { Calendar, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
 
 interface FixedExpensesProps {
   onUpdate: () => void;
 }
 
 const CATEGORIES = ['Rent', 'Loan', 'Subscription', 'Insurance', 'Utilities', 'Other'];
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  Rent: '🏠', Loan: '🏦', Subscription: '📱', Insurance: '🛡️', Utilities: '⚡', Other: '📋',
+};
 
 export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
   const { user } = useAuth();
@@ -22,18 +26,19 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
   const [dueDay, setDueDay] = useState('1');
   const [category, setCategory] = useState('Rent');
 
-  useEffect(() => { if (user) loadRules(); }, [user]);
-
-  const loadRules = async () => {
+  // ── Real-time listener: rules update instantly without page refresh ──
+  useEffect(() => {
     if (!user) return;
     const q = query(
       collection(db, 'fixed_rules'),
       where('user_id', '==', user.uid),
       orderBy('created_at', 'desc')
     );
-    const snap = await getDocs(q);
-    setRules(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule)));
-  };
+    const unsubscribe = onSnapshot(q, (snap) => {
+      setRules(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule)));
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +55,9 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
         is_paid: false,
         created_at: new Date().toISOString(),
       });
+      // onSnapshot will update `rules` automatically — no manual reload needed
       setExpenseName(''); setAmount(''); setFrequency('Monthly'); setDueDay('1'); setCategory('Rent');
       setShowForm(false);
-      await loadRules();
       onUpdate();
     } catch (err) {
       console.error('Error adding fixed expense:', err);
@@ -63,12 +68,19 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, 'fixed_rules', id));
-    await loadRules();
+    // onSnapshot handles the UI update automatically
+    onUpdate();
+  };
+
+  const handleTogglePaid = async (rule: FixedRule) => {
+    await updateDoc(doc(db, 'fixed_rules', rule.id), { is_paid: !rule.is_paid });
+    // onSnapshot handles the UI update automatically
     onUpdate();
   };
 
   const totalMonthly = rules.filter(r => r.frequency === 'Monthly').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
-  const totalWeekly = rules.filter(r => r.frequency === 'Weekly').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
+  const totalWeekly  = rules.filter(r => r.frequency === 'Weekly').reduce((s, r)  => s + parseFloat(r.amount.toString()), 0);
+  const paidCount    = rules.filter(r => r.is_paid).length;
 
   const inputStyle: React.CSSProperties = {
     background: 'rgba(237,246,249,0.8)',
@@ -94,7 +106,9 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
             <h2 className="text-xl font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
               Fixed Spends
             </h2>
-            <p className="text-sm" style={{ color: 'var(--pearlAqua)' }}>Recurring commitments</p>
+            <p className="text-sm" style={{ color: 'var(--pearlAqua)' }}>
+              {paidCount}/{rules.length} paid this period
+            </p>
           </div>
         </div>
         <button
@@ -188,7 +202,7 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
       )}
 
       {/* Rules list */}
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+      <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
         {rules.length === 0 ? (
           <div className="text-center py-8 text-sm font-medium" style={{ color: 'var(--pearlAqua)' }}>
             No fixed expenses yet. Add your recurring payments! 🧾
@@ -198,28 +212,65 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
             <div
               key={rule.id}
               className="flex items-center justify-between p-3 rounded-xl border transition-all hover:shadow-sm"
-              style={{ background: 'rgba(237,246,249,0.5)', borderColor: 'rgba(131,197,190,0.35)' }}
+              style={{
+                background: rule.is_paid ? 'rgba(16,185,129,0.06)' : 'rgba(237,246,249,0.5)',
+                borderColor: rule.is_paid ? '#86efac' : 'rgba(131,197,190,0.35)',
+              }}
             >
-              <div className="flex items-center gap-3">
+              {/* Left: icon + details */}
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center"
-                  style={{ background: 'rgba(226,149,120,0.15)' }}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                  style={{ background: 'rgba(226,149,120,0.12)' }}
                 >
-                  <IndianRupee className="w-4 h-4" style={{ color: 'var(--tangerineDream)' }} />
+                  {CATEGORY_EMOJI[rule.category] || '💰'}
                 </div>
-                <div>
-                  <div className="font-semibold text-sm" style={{ color: 'var(--stormyTeal)' }}>
+                <div className="min-w-0">
+                  <div
+                    className="font-semibold text-sm truncate"
+                    style={{
+                      color: rule.is_paid ? '#16a34a' : 'var(--stormyTeal)',
+                      textDecoration: rule.is_paid ? 'line-through' : 'none',
+                    }}
+                  >
                     {rule.expense_name}
                   </div>
-                  <div className="text-xs" style={{ color: 'var(--pearlAqua)' }}>
-                    {rule.category} • {rule.frequency} • Day {rule.due_day}
+                  <div className="text-xs flex items-center gap-1.5 flex-wrap" style={{ color: 'var(--pearlAqua)' }}>
+                    <span
+                      className="px-1.5 py-0.5 rounded-md text-xs font-semibold"
+                      style={{ background: 'rgba(131,197,190,0.15)', color: 'var(--stormyTeal)' }}
+                    >
+                      {rule.category}
+                    </span>
+                    <span>·</span>
+                    <span>{rule.frequency}</span>
+                    <span>·</span>
+                    <span>Due day {rule.due_day}</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+
+              {/* Right: amount + paid toggle + delete */}
+              <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                 <div className="font-bold text-sm" style={{ color: 'var(--tangerineDream)' }}>
                   {formatINR(parseFloat(rule.amount.toString()))}
                 </div>
+                {/* Paid toggle */}
+                <button
+                  onClick={() => handleTogglePaid(rule)}
+                  title={rule.is_paid ? 'Mark as unpaid' : 'Mark as paid'}
+                  className="p-1.5 rounded-lg transition-all hover:scale-105"
+                  style={
+                    rule.is_paid
+                      ? { background: '#dcfce7', color: '#16a34a' }
+                      : { background: 'rgba(131,197,190,0.15)', color: 'var(--pearlAqua)' }
+                  }
+                >
+                  {rule.is_paid
+                    ? <CheckCircle2 className="w-4 h-4" />
+                    : <Circle className="w-4 h-4" />
+                  }
+                </button>
                 <button
                   onClick={() => handleDelete(rule.id)}
                   className="p-1.5 rounded-lg transition-all hover:scale-105"
@@ -232,6 +283,25 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
           ))
         )}
       </div>
+
+      {/* Progress bar if any rules */}
+      {rules.length > 0 && (
+        <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(131,197,190,0.25)' }}>
+          <div className="flex justify-between text-xs font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
+            <span>Payment progress</span>
+            <span>{paidCount}/{rules.length} paid</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(131,197,190,0.2)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: rules.length > 0 ? `${(paidCount / rules.length) * 100}%` : '0%',
+                background: 'linear-gradient(90deg, var(--stormyTeal), var(--pearlAqua))',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

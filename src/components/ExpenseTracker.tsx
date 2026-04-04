@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-  collection, addDoc, query, where, getDocs,
+  collection, addDoc,
   doc, getDoc, setDoc, arrayUnion,
 } from 'firebase/firestore';
-import { db, FixedRule } from '../lib/firebase';
+import { db, FixedRule, AuditEntry } from '../lib/firebase';
+import { analyseEntry } from '../lib/insightEngine';
 import { useAuth } from '../hooks/useAuth';
 import {
   Smile, Meh, Frown, TrendingDown, TrendingUp,
@@ -33,11 +34,16 @@ const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Ot
 interface ExpenseTrackerProps {
   onEntryAdded: () => void;
   fixedRules: FixedRule[];
+  auditEntries: AuditEntry[];
 }
 
 // Component
 
+<<<<<<< HEAD:src/components/Auditor.tsx
+export default function Auditor({ onEntryAdded, fixedRules, auditEntries }: AuditorProps) {
+=======
 export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrackerProps) {
+>>>>>>> 53801790df4678f66c94bcc5dacc121b6c722778:src/components/ExpenseTracker.tsx
   const { user } = useAuth();
 
   //  Form state 
@@ -97,9 +103,10 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     loadSettings();
   }, [user]);
 
-  //  Unpaid fixed-spend check 
-  const checkUnpaidFixed = async () => {
+  //  Unpaid fixed-spend check — now pure, synchronous, and local
+  const checkUnpaidFixed = () => {
     if (!user || fixedRules.length === 0) return;
+<<<<<<< HEAD
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const q = query(
@@ -109,11 +116,26 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     );
     const snap = await getDocs(q);
     const paidThisMonth = snap.docs.map((d) => d.data().product_service?.toLowerCase() ?? '');
+=======
+    const now        = new Date();
+    const monthYear  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Filter existing entries in memory — no network call!
+    const paidThisMonth = auditEntries
+      .filter((e: AuditEntry) => e.purchase_date.startsWith(monthYear))
+      .map((e: AuditEntry) => e.product_service?.toLowerCase() ?? '');
+
+>>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
     const unpaid = fixedRules.filter(
-      (r) => !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
+      (r: FixedRule) => !paidThisMonth.some((p: string) => p.includes(r.expense_name.toLowerCase()))
     );
     setUnpaidWarning(unpaid.map((r) => r.expense_name));
   };
+
+  // Keep the warning updated whenever entries or rules change
+  useEffect(() => {
+    checkUnpaidFixed();
+  }, [auditEntries, fixedRules]);
 
   //  Add custom category 
   const handleAddCategory = async () => {
@@ -185,14 +207,19 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     setSuccess(false);
 
     try {
+<<<<<<< HEAD
 
       await checkUnpaidFixed();
+=======
+      // No more blocking checkUnpaidFixed() here — the useEffect handles it!
+>>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
 
 
       if (sourceOfPayment === 'Other' && finalSource) {
         await saveCustomSource(finalSource);
       }
 
+<<<<<<< HEAD
 
       await addDoc(collection(db, 'audit_entries'), {
         user_id: user.uid,
@@ -204,6 +231,33 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
         source_of_payment: finalSource,
         purchase_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
+=======
+      
+      // ── Run the Psychological Insights Engine ──
+      const insight = analyseEntry({
+        mood,
+        spending_type: undefined,   // spending_type not in form — engine works without it
+        amount: parseFloat(amount),
+        reason: reason.trim(),
+        spending_category: finalCategory,
+      });
+
+      await addDoc(collection(db, 'audit_entries'), {
+        user_id:                user.uid,
+        product_service:        productService.trim(),
+        amount:                 parseFloat(amount),
+        spending_category:      finalCategory,
+        reason:                 reason.trim(),
+        mood,
+        source_of_payment:      finalSource,
+        purchase_date:          new Date().toISOString(),
+        created_at:             new Date().toISOString(),
+        // Insight fields
+        insight_summary:        insight.summary,
+        insight_triggers:       insight.triggers,
+        insight_risk:           insight.risk,
+        insight_recommendation: insight.recommendation,
+>>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
       });
 
 
@@ -285,7 +339,6 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
             type="text"
             value={productService}
             onChange={(e) => setProductService(e.target.value)}
-            onFocus={checkUnpaidFixed}
             className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all"
             style={inputStyle}
             placeholder="What did you buy?"
