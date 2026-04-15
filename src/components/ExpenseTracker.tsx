@@ -11,15 +11,15 @@ import {
   AlertTriangle, ShieldCheck, Plus, X,
 } from 'lucide-react';
 
-// Constants 
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const MOODS = [
-  { value: 'Happy', icon: Smile, color: '#10b981' },
-  { value: 'Neutral', icon: Meh, color: '#f59e0b' },
-  { value: 'Sad', icon: Frown, color: '#60a5fa' },
+  { value: 'Happy',    icon: Smile,        color: '#10b981' },
+  { value: 'Neutral',  icon: Meh,          color: '#f59e0b' },
+  { value: 'Sad',      icon: Frown,        color: '#60a5fa' },
   { value: 'Stressed', icon: TrendingDown, color: '#ef4444' },
-  { value: 'Excited', icon: TrendingUp, color: '#a855f7' },
-  { value: 'Bored', icon: Meh, color: '#94a3b8' },
+  { value: 'Excited',  icon: TrendingUp,   color: '#a855f7' },
+  { value: 'Bored',    icon: Meh,          color: '#94a3b8' },
 ];
 
 const DEFAULT_CATEGORIES = [
@@ -29,7 +29,7 @@ const DEFAULT_CATEGORIES = [
 
 const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Other'];
 
-// Types 
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ExpenseTrackerProps {
   onEntryAdded: () => void;
@@ -37,38 +37,34 @@ interface ExpenseTrackerProps {
   auditEntries: AuditEntry[];
 }
 
-// Component
+// ── Component ─────────────────────────────────────────────────────────────────
 
-<<<<<<< HEAD:src/components/Auditor.tsx
-export default function Auditor({ onEntryAdded, fixedRules, auditEntries }: AuditorProps) {
-=======
-export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrackerProps) {
->>>>>>> 53801790df4678f66c94bcc5dacc121b6c722778:src/components/ExpenseTracker.tsx
+export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries }: ExpenseTrackerProps) {
   const { user } = useAuth();
 
-  //  Form state 
+  // ── Form state ────────────────────────────────────────────────────────────
   const [productService, setProductService] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food & Dining');
-  const [reason, setReason] = useState('');
-  const [mood, setMood] = useState('Neutral');
-  const [sourceOfPayment, setSourceOfPayment] = useState('GPay');
+  const [amount, setAmount]                 = useState('');
+  const [category, setCategory]             = useState('Food & Dining');
+  const [reason, setReason]                 = useState('');
+  const [mood, setMood]                     = useState('Neutral');
+  const [sourceOfPayment, setSourceOfPayment]           = useState('GPay');
   const [sourceOfPaymentOther, setSourceOfPaymentOther] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState(false);
   const [unpaidWarning, setUnpaidWarning] = useState<string[]>([]);
 
-  //  Dynamic categories
-  const [allCategories, setAllCategories] = useState<string[]>(DEFAULT_CATEGORIES);
-  const [showAddCategory, setShowAddCategory] = useState(false);
+  // ── Dynamic categories ────────────────────────────────────────────────────
+  const [allCategories, setAllCategories]       = useState<string[]>(DEFAULT_CATEGORIES);
+  const [showAddCategory, setShowAddCategory]   = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
-  const [savingCategory, setSavingCategory] = useState(false);
+  const [savingCategory, setSavingCategory]     = useState(false);
 
-  // Dynamic payment sources 
+  // ── Dynamic payment sources ───────────────────────────────────────────────
   const [allPaymentSources, setAllPaymentSources] = useState<string[]>(DEFAULT_PAYMENT_SOURCES);
 
-  //Load user settings (custom categories + custom payment sources) 
+  // ── Load user settings (custom categories + payment sources) ─────────────
   useEffect(() => {
     if (!user) return;
     const loadSettings = async () => {
@@ -79,20 +75,20 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           const data = snap.data();
           if (data.custom_categories?.length) {
             setAllCategories([
-              ...DEFAULT_CATEGORIES.slice(0, -1), // all except "Other"
+              ...DEFAULT_CATEGORIES.slice(0, -1),
               ...data.custom_categories.filter(
                 (c: string) => !DEFAULT_CATEGORIES.includes(c)
               ),
-              'Other', // keep "Other" at end
+              'Other',
             ]);
           }
           if (data.custom_payment_sources?.length) {
             setAllPaymentSources([
-              ...DEFAULT_PAYMENT_SOURCES.slice(0, -1), // all except "Other"
+              ...DEFAULT_PAYMENT_SOURCES.slice(0, -1),
               ...data.custom_payment_sources.filter(
                 (s: string) => !DEFAULT_PAYMENT_SOURCES.includes(s)
               ),
-              'Other', // keep "Other" at end
+              'Other',
             ]);
           }
         }
@@ -103,41 +99,27 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     loadSettings();
   }, [user]);
 
-  //  Unpaid fixed-spend check — now pure, synchronous, and local
+  // ── Unpaid fixed-spend check — pure, in-memory, no network call ───────────
   const checkUnpaidFixed = () => {
     if (!user || fixedRules.length === 0) return;
-<<<<<<< HEAD
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const q = query(
-      collection(db, 'audit_entries'),
-      where('user_id', '==', user.uid),
-      where('purchase_date', '>=', monthStart)
-    );
-    const snap = await getDocs(q);
-    const paidThisMonth = snap.docs.map((d) => d.data().product_service?.toLowerCase() ?? '');
-=======
-    const now        = new Date();
-    const monthYear  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    
-    // Filter existing entries in memory — no network call!
+    const now       = new Date();
+    const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const paidThisMonth = auditEntries
-      .filter((e: AuditEntry) => e.purchase_date.startsWith(monthYear))
-      .map((e: AuditEntry) => e.product_service?.toLowerCase() ?? '');
-
->>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
+      .filter((e) => e.purchase_date.startsWith(monthYear))
+      .map((e) => e.product_service?.toLowerCase() ?? '');
     const unpaid = fixedRules.filter(
-      (r: FixedRule) => !paidThisMonth.some((p: string) => p.includes(r.expense_name.toLowerCase()))
+      (r) => !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
     );
     setUnpaidWarning(unpaid.map((r) => r.expense_name));
   };
 
-  // Keep the warning updated whenever entries or rules change
+  // Re-evaluate warning whenever entries or rules change via onSnapshot
   useEffect(() => {
     checkUnpaidFixed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditEntries, fixedRules]);
 
-  //  Add custom category 
+  // ── Add custom category ───────────────────────────────────────────────────
   const handleAddCategory = async () => {
     const trimmed = newCategoryInput.trim();
     if (!trimmed || !user) return;
@@ -151,7 +133,6 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     try {
       const settingsRef = doc(db, 'user_settings', user.uid);
       await setDoc(settingsRef, { custom_categories: arrayUnion(trimmed) }, { merge: true });
-      // Insert before "Other"
       setAllCategories((prev) => {
         const withoutOther = prev.filter((c) => c !== 'Other');
         return [...withoutOther, trimmed, 'Other'];
@@ -166,15 +147,13 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     }
   };
 
-  // Save custom payment source 
+  // ── Save custom payment source ────────────────────────────────────────────
   const saveCustomSource = async (value: string) => {
     if (!value || !user) return;
-    // Skip if it's already a known source (default or previously saved)
     if (DEFAULT_PAYMENT_SOURCES.includes(value)) return;
     try {
       const settingsRef = doc(db, 'user_settings', user.uid);
       await setDoc(settingsRef, { custom_payment_sources: arrayUnion(value) }, { merge: true });
-      // Update local list so the new source appears as a pill button immediately
       setAllPaymentSources((prev) => {
         if (prev.includes(value)) return prev;
         const withoutOther = prev.filter((s) => s !== 'Other');
@@ -185,17 +164,14 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     }
   };
 
-  //  Submit
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-
-
-    const finalCategory: string = category.trim();
-    const finalSource: string =
+    const finalCategory = category.trim();
+    const finalSource   =
       sourceOfPayment === 'Other' ? sourceOfPaymentOther.trim() : sourceOfPayment;
-
 
     if (sourceOfPayment === 'Other' && !finalSource) {
       setError('Please enter a custom payment source.');
@@ -207,36 +183,15 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     setSuccess(false);
 
     try {
-<<<<<<< HEAD
-
-      await checkUnpaidFixed();
-=======
-      // No more blocking checkUnpaidFixed() here — the useEffect handles it!
->>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
-
-
+      // Persist custom source if needed
       if (sourceOfPayment === 'Other' && finalSource) {
         await saveCustomSource(finalSource);
       }
 
-<<<<<<< HEAD
-
-      await addDoc(collection(db, 'audit_entries'), {
-        user_id: user.uid,
-        product_service: productService.trim(),
-        amount: parseFloat(amount),
-        spending_category: finalCategory,
-        reason: reason.trim(),
-        mood,
-        source_of_payment: finalSource,
-        purchase_date: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-=======
-      
-      // ── Run the Psychological Insights Engine ──
+      // Run the Psychological Insights Engine
       const insight = analyseEntry({
         mood,
-        spending_type: undefined,   // spending_type not in form — engine works without it
+        spending_type: undefined,
         amount: parseFloat(amount),
         reason: reason.trim(),
         spending_category: finalCategory,
@@ -257,9 +212,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
         insight_triggers:       insight.triggers,
         insight_risk:           insight.risk,
         insight_recommendation: insight.recommendation,
->>>>>>> fed669b96068ebc6287cb63b3a361b705af7dc1d
       });
-
 
       setSuccess(true);
       setProductService('');
@@ -274,25 +227,24 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to log entry. Please try again.');
     } finally {
-      // Always clear loading — even if saveCustomSource or addDoc threw
       setLoading(false);
     }
   };
 
-
+  // ── Styles ────────────────────────────────────────────────────────────────
   const inputStyle: React.CSSProperties = {
-    background: 'rgba(237,246,249,0.8)',
+    background:  'rgba(237,246,249,0.8)',
     borderColor: 'var(--pearlAqua)',
-    color: 'var(--stormyTeal)',
+    color:       'var(--stormyTeal)',
   };
 
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
       className="rounded-2xl p-6 shadow-lg border"
       style={{ background: 'white', borderColor: 'rgba(131,197,190,0.35)' }}
     >
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div
           className="w-11 h-11 rounded-xl flex items-center justify-center shadow-md"
@@ -308,7 +260,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
         </div>
       </div>
 
-      {/* ── Unpaid Fixed Spend Warning ── */}
+      {/* Unpaid Fixed Spend Warning */}
       {unpaidWarning.length > 0 && (
         <div
           className="mb-5 p-4 rounded-xl flex items-start gap-3 border"
@@ -330,7 +282,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* ── Product / Service ── */}
+        {/* Product / Service */}
         <div>
           <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
             Product / Service
@@ -346,9 +298,8 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           />
         </div>
 
-        {/* ── Amount + Category ── */}
+        {/* Amount + Category */}
         <div className="grid grid-cols-2 gap-4">
-          {/* Amount */}
           <div>
             <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
               Amount (₹)
@@ -365,7 +316,6 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
             />
           </div>
 
-          {/* Category */}
           <div>
             <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
               Category
@@ -381,7 +331,6 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-              {/* Add category button */}
               <button
                 type="button"
                 onClick={() => setShowAddCategory((v) => !v)}
@@ -389,15 +338,14 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                 className="w-11 h-11 flex items-center justify-center rounded-xl border-2 flex-shrink-0 transition-all hover:scale-105"
                 style={{
                   borderColor: showAddCategory ? 'var(--stormyTeal)' : 'var(--pearlAqua)',
-                  background: showAddCategory ? 'var(--stormyTeal)' : 'rgba(237,246,249,0.8)',
-                  color: showAddCategory ? 'white' : 'var(--stormyTeal)',
+                  background:  showAddCategory ? 'var(--stormyTeal)' : 'rgba(237,246,249,0.8)',
+                  color:       showAddCategory ? 'white' : 'var(--stormyTeal)',
                 }}
               >
                 {showAddCategory ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               </button>
             </div>
 
-            {/* Add category inline input */}
             {showAddCategory && (
               <div className="mt-2 flex gap-2">
                 <input
@@ -424,7 +372,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           </div>
         </div>
 
-        {/* ── Source of Payment ── */}
+        {/* Source of Payment */}
         <div>
           <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--stormyTeal)' }}>
             Source of Payment
@@ -442,17 +390,16 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                     : { background: 'rgba(237,246,249,0.7)', color: 'var(--stormyTeal)', borderColor: 'var(--pearlAqua)' }
                 }
               >
-                {src === 'GPay' ? '🟢' :
-                  src === 'Paytm' ? '🔵' :
-                    src === 'PhonePe' ? '🟣' :
-                      src === 'Cash' ? '💵' :
-                        src === 'Card' ? '💳' :
-                          src === 'Other' ? '📝' : '💰'} {src}
+                {src === 'GPay'    ? '🟢' :
+                 src === 'Paytm'   ? '🔵' :
+                 src === 'PhonePe' ? '🟣' :
+                 src === 'Cash'    ? '💵' :
+                 src === 'Card'    ? '💳' :
+                 src === 'Other'   ? '📝' : '💰'} {src}
               </button>
             ))}
           </div>
 
-          {/* "Other" text input for custom source */}
           {sourceOfPayment === 'Other' && (
             <input
               type="text"
@@ -466,7 +413,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           )}
         </div>
 
-        {/* ── Mood Picker ── */}
+        {/* Mood Picker */}
         <div>
           <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--stormyTeal)' }}>
             Your Mood Before Purchase
@@ -483,7 +430,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
                   className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all border-2"
                   style={{
                     borderColor: isSelected ? m.color : 'var(--pearlAqua)',
-                    background: isSelected ? `${m.color}18` : 'rgba(237,246,249,0.5)',
+                    background:  isSelected ? `${m.color}18` : 'rgba(237,246,249,0.5)',
                   }}
                 >
                   <Icon className="w-5 h-5" style={{ color: m.color }} />
@@ -496,7 +443,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           </div>
         </div>
 
-        {/* ── Reason ── */}
+        {/* Reason */}
         <div>
           <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
             Why did you make this purchase?
@@ -512,7 +459,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules }: ExpenseTrac
           />
         </div>
 
-        {/* ── Error / Success ── */}
+        {/* Error / Success */}
         {error && (
           <div className="p-3 rounded-xl border text-sm" style={{ background: '#fff0ed', borderColor: 'var(--tangerineDream)', color: '#c0392b' }}>
             {error}

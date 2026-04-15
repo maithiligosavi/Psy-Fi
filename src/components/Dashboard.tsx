@@ -21,7 +21,6 @@ export default function Dashboard() {
   const [auditEntries,  setAuditEntries]  = useState<AuditEntry[]>([]);
   const [fixedRules,    setFixedRules]    = useState<FixedRule[]>([]);
   const [totalBalance,  setTotalBalance]  = useState(50000);
-  const [entriesReady,  setEntriesReady]  = useState(false);   // true once first snapshot arrives
   const balanceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── 1. Load persisted balance once on mount ───────────────────────────────
@@ -52,7 +51,6 @@ export default function Dashboard() {
       q,
       (snap) => {
         setAuditEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditEntry)));
-        setEntriesReady(true);
       },
       (err) => console.error('audit_entries listener error:', err)
     );
@@ -239,19 +237,14 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-<<<<<<< HEAD
-            {/* onEntryAdded is a no-op now — onSnapshot handles the update */}
-            <Auditor 
-              onEntryAdded={() => {}} 
-              fixedRules={fixedRules} 
+            {/* onEntryAdded is a no-op — onSnapshot handles real-time updates */}
+            <ExpenseTracker
+              onEntryAdded={() => {}}
+              fixedRules={fixedRules}
               auditEntries={auditEntries}
             />
-            <BehavioralHistory entries={auditEntries} loading={!entriesReady} />
-            <ReportsDashboard entries={auditEntries} fixedRules={fixedRules} />
-=======
-            <ExpenseTracker onEntryAdded={loadData} fixedRules={fixedRules} />
             <BehavioralHistory entries={auditEntries} />
->>>>>>> 53801790df4678f66c94bcc5dacc121b6c722778
+            <ReportsDashboard entries={auditEntries} fixedRules={fixedRules} />
           </div>
           <div className="space-y-6">
             {/* SafetyMeter reactively recalculates whenever auditEntries or fixedRules change */}
