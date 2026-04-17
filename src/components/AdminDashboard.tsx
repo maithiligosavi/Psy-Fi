@@ -7,6 +7,7 @@ import {
   TrendingDown, LogOut, ShieldCheck, BarChart3, UserCog,
   RefreshCw, Ban,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -239,19 +240,28 @@ export default function AdminDashboard() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
-                style={{ background: 'rgba(131,197,190,0.25)', border: '1px solid rgba(131,197,190,0.4)' }}
-              >
-                <Brain className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md"
+                  style={{ background: 'rgba(131,197,190,0.25)', border: '1px solid rgba(131,197,190,0.4)' }}
+                >
+                  <Brain className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-extrabold text-white tracking-tight">Psy-Fi</h1>
+                  <p className="text-xs font-medium" style={{ color: 'var(--almondSilk)' }}>
+                    Metrics
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-extrabold text-white tracking-tight">Psy-Fi</h1>
-                <p className="text-xs font-medium" style={{ color: 'var(--almondSilk)' }}>
-                  Admin Console
-                </p>
+              <div className="hidden sm:flex items-center gap-2 border-l pl-6" style={{ borderColor: 'rgba(131,197,190,0.3)' }}>
+                <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white/20 text-white">
+                  Metrics
+                </Link>
+                <Link to="/admin/users" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10">
+                  User Management
+                </Link>
               </div>
             </div>
 
@@ -288,6 +298,15 @@ export default function AdminDashboard() {
                 <LogOut className="w-5 h-5" style={{ color: 'var(--almondSilk)' }} />
               </button>
             </div>
+          </div>
+          {/* Mobile Nav */}
+          <div className="sm:hidden flex items-center gap-2 pb-3 pt-1 border-t border-white/10 mt-1">
+             <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white/20 text-white w-full text-center">
+               Metrics
+             </Link>
+             <Link to="/admin/users" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10 w-full text-center">
+               Users
+             </Link>
           </div>
         </div>
       </nav>
@@ -433,108 +452,6 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
-        </section>
-
-        {/* ── Section 3: User Management ── */}
-        <section>
-          <SectionHeader
-            icon={UserCog}
-            title="User Management"
-            subtitle={`${users.length} registered account${users.length !== 1 ? 's' : ''}`}
-          />
-          <div
-            className="rounded-2xl shadow-md border overflow-hidden"
-            style={{ background: 'white', borderColor: 'rgba(131,197,190,0.35)' }}
-          >
-            {/* Table header */}
-            <div
-              className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-bold uppercase tracking-wide border-b"
-              style={{
-                background: 'linear-gradient(135deg, var(--stormyTeal), #004d57)',
-                color: 'var(--almondSilk)',
-                borderColor: 'rgba(131,197,190,0.2)',
-              }}
-            >
-              <span className="col-span-4">Name</span>
-              <span className="col-span-5">Email</span>
-              <span className="col-span-2 text-center">Role</span>
-              <span className="col-span-1 text-center">Action</span>
-            </div>
-
-            {/* Rows */}
-            {users.length === 0 ? (
-              <div className="py-10 text-center">
-                <Users className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--pearlAqua)' }} />
-                <p className="text-sm" style={{ color: 'var(--pearlAqua)' }}>No users found.</p>
-              </div>
-            ) : (
-              <div className="divide-y" style={{ borderColor: 'rgba(131,197,190,0.15)' }}>
-                {users.map((u, idx) => (
-                  <div
-                    key={u.id}
-                    className="grid grid-cols-12 gap-4 px-5 py-3.5 items-center transition-colors hover:bg-slate-50"
-                    style={{ animationDelay: `${idx * 30}ms` }}
-                  >
-                    {/* Name */}
-                    <div className="col-span-4 flex items-center gap-3 min-w-0">
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-white"
-                        style={{ background: u.role === 'admin' ? 'var(--tangerineDream)' : 'var(--stormyTeal)' }}
-                      >
-                        {(u.name?.[0] ?? '?').toUpperCase()}
-                      </div>
-                      <span
-                        className="text-sm font-semibold truncate"
-                        style={{ color: 'var(--stormyTeal)' }}
-                      >
-                        {u.name || '—'}
-                      </span>
-                    </div>
-
-                    {/* Email */}
-                    <div className="col-span-5 min-w-0">
-                      <span
-                        className="text-sm truncate block"
-                        style={{ color: 'var(--pearlAqua)' }}
-                      >
-                        {u.email}
-                      </span>
-                    </div>
-
-                    {/* Role badge */}
-                    <div className="col-span-2 flex justify-center">
-                      <span
-                        className="text-xs font-bold px-2.5 py-1 rounded-full capitalize"
-                        style={
-                          u.role === 'admin'
-                            ? { background: 'rgba(226,149,120,0.15)', color: 'var(--tangerineDream)', border: '1px solid rgba(226,149,120,0.4)' }
-                            : { background: 'rgba(0,109,119,0.08)', color: 'var(--stormyTeal)', border: '1px solid rgba(131,197,190,0.4)' }
-                        }
-                      >
-                        {u.role}
-                      </span>
-                    </div>
-
-                    {/* Suspend button (placeholder — requires server-side Admin SDK) */}
-                    <div className="col-span-1 flex justify-center">
-                      <button
-                        disabled
-                        title="Suspend requires Firebase Admin SDK (coming soon)"
-                        className="p-2 rounded-xl opacity-40 cursor-not-allowed transition-all"
-                        style={{ background: 'rgba(226,149,120,0.15)', border: '1px solid rgba(226,149,120,0.3)' }}
-                      >
-                        <Ban className="w-4 h-4" style={{ color: 'var(--tangerineDream)' }} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <p className="mt-3 text-xs text-center" style={{ color: 'var(--pearlAqua)' }}>
-            🔒 Suspend functionality requires the Firebase Admin SDK via a server-side Cloud Function.
-          </p>
         </section>
 
       </main>

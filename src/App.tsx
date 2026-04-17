@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import ChangesPage from './components/ChangesPage';
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './components/AdminDashboard';
+import UserManagement from './components/UserManagement';
 import ChangelogPage from './components/ChangelogPage';
 
 /** Loading splash — shared by all route guards */
@@ -89,6 +90,18 @@ function AppRoutes() {
           <AdminGuardRoute>
             <AdminRoute>
               <AdminDashboard />
+            </AdminRoute>
+          </AdminGuardRoute>
+        }
+      />
+
+      {/* Admin: User Management */}
+      <Route
+        path="/admin/users"
+        element={
+          <AdminGuardRoute>
+            <AdminRoute>
+              <UserManagement />
             </AdminRoute>
           </AdminGuardRoute>
         }
