@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
   collection, addDoc,
-  doc, getDoc, setDoc, arrayUnion,
+  doc, onSnapshot,
 } from 'firebase/firestore';
 import { db, FixedRule, AuditEntry } from '../lib/firebase';
 import { analyseEntry } from '../lib/insightEngine';
 import { useAuth } from '../hooks/useAuth';
 import {
   Smile, Meh, Frown, TrendingDown, TrendingUp,
-  AlertTriangle, ShieldCheck, Plus, X,
+  AlertTriangle, ShieldCheck,
 } from 'lucide-react';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -21,13 +21,6 @@ const MOODS = [
   { value: 'Excited',  icon: TrendingUp,   color: '#a855f7' },
   { value: 'Bored',    icon: Meh,          color: '#94a3b8' },
 ];
-
-const DEFAULT_CATEGORIES = [
-  'Food & Dining', 'Shopping', 'Travel', 'Entertainment',
-  'Healthcare', 'Bills & Utilities', 'Education', 'Other',
-];
-
-const DEFAULT_PAYMENT_SOURCES = ['GPay', 'Paytm', 'PhonePe', 'Cash', 'Card', 'Other'];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -45,59 +38,49 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
   // ── Form state ────────────────────────────────────────────────────────────
   const [productService, setProductService] = useState('');
   const [amount, setAmount]                 = useState('');
-  const [category, setCategory]             = useState('Food & Dining');
+  const [category, setCategory]             = useState('');
   const [reason, setReason]                 = useState('');
   const [mood, setMood]                     = useState('Neutral');
-  const [sourceOfPayment, setSourceOfPayment]           = useState('GPay');
+  const [sourceOfPayment, setSourceOfPayment]           = useState('');
   const [sourceOfPaymentOther, setSourceOfPaymentOther] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState(false);
   const [unpaidWarning, setUnpaidWarning] = useState<string[]>([]);
 
-  // ── Dynamic categories ────────────────────────────────────────────────────
-  const [allCategories, setAllCategories]       = useState<string[]>(DEFAULT_CATEGORIES);
-  const [showAddCategory, setShowAddCategory]   = useState(false);
-  const [newCategoryInput, setNewCategoryInput] = useState('');
-  const [savingCategory, setSavingCategory]     = useState(false);
+  // ── Global settings (categories + payment sources) ────────────────────────
+  const [allCategories, setAllCategories]         = useState<string[]>([]);
+  const [allPaymentSources, setAllPaymentSources] = useState<string[]>([]);
+  const [settingsLoading, setSettingsLoading]     = useState(true);
 
-  // ── Dynamic payment sources ───────────────────────────────────────────────
-  const [allPaymentSources, setAllPaymentSources] = useState<string[]>(DEFAULT_PAYMENT_SOURCES);
-
-  // ── Load user settings (custom categories + payment sources) ─────────────
+  // ── Real-time listener on global_settings ────────────────────────────────
   useEffect(() => {
-    if (!user) return;
-    const loadSettings = async () => {
-      try {
-        const settingsRef = doc(db, 'user_settings', user.uid);
-        const snap = await getDoc(settingsRef);
+    const globalRef = doc(db, 'global_settings', 'dropdown_options');
+    const unsub = onSnapshot(
+      globalRef,
+      (snap) => {
         if (snap.exists()) {
           const data = snap.data();
-          if (data.custom_categories?.length) {
-            setAllCategories([
-              ...DEFAULT_CATEGORIES.slice(0, -1),
-              ...data.custom_categories.filter(
-                (c: string) => !DEFAULT_CATEGORIES.includes(c)
-              ),
-              'Other',
-            ]);
-          }
-          if (data.custom_payment_sources?.length) {
-            setAllPaymentSources([
-              ...DEFAULT_PAYMENT_SOURCES.slice(0, -1),
-              ...data.custom_payment_sources.filter(
-                (s: string) => !DEFAULT_PAYMENT_SOURCES.includes(s)
-              ),
-              'Other',
-            ]);
-          }
+          const cats: string[]    = Array.isArray(data.categories)      ? data.categories      : [];
+          const srcs: string[]    = Array.isArray(data.payment_sources) ? data.payment_sources : [];
+          setAllCategories(cats);
+          setAllPaymentSources(srcs);
+          // Set sensible defaults for controlled selects
+          setCategory((prev) => (prev && cats.includes(prev) ? prev : cats[0] ?? ''));
+          setSourceOfPayment((prev) => (prev && srcs.includes(prev) ? prev : srcs[0] ?? ''));
+        } else {
+          setAllCategories([]);
+          setAllPaymentSources([]);
         }
-      } catch (err) {
-        console.error('Failed to load user settings:', err);
+        setSettingsLoading(false);
+      },
+      (err) => {
+        console.error('Failed to load global settings:', err);
+        setSettingsLoading(false);
       }
-    };
-    loadSettings();
-  }, [user]);
+    );
+    return () => unsub();
+  }, []);
 
   // ── Unpaid fixed-spend check — pure, in-memory, no network call ───────────
   const checkUnpaidFixed = () => {
@@ -119,50 +102,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auditEntries, fixedRules]);
 
-  // ── Add custom category ───────────────────────────────────────────────────
-  const handleAddCategory = async () => {
-    const trimmed = newCategoryInput.trim();
-    if (!trimmed || !user) return;
-    if (allCategories.includes(trimmed)) {
-      setCategory(trimmed);
-      setShowAddCategory(false);
-      setNewCategoryInput('');
-      return;
-    }
-    setSavingCategory(true);
-    try {
-      const settingsRef = doc(db, 'user_settings', user.uid);
-      await setDoc(settingsRef, { custom_categories: arrayUnion(trimmed) }, { merge: true });
-      setAllCategories((prev) => {
-        const withoutOther = prev.filter((c) => c !== 'Other');
-        return [...withoutOther, trimmed, 'Other'];
-      });
-      setCategory(trimmed);
-      setShowAddCategory(false);
-      setNewCategoryInput('');
-    } catch (err) {
-      console.error('Failed to save custom category:', err);
-    } finally {
-      setSavingCategory(false);
-    }
-  };
 
-  // ── Save custom payment source ────────────────────────────────────────────
-  const saveCustomSource = async (value: string) => {
-    if (!value || !user) return;
-    if (DEFAULT_PAYMENT_SOURCES.includes(value)) return;
-    try {
-      const settingsRef = doc(db, 'user_settings', user.uid);
-      await setDoc(settingsRef, { custom_payment_sources: arrayUnion(value) }, { merge: true });
-      setAllPaymentSources((prev) => {
-        if (prev.includes(value)) return prev;
-        const withoutOther = prev.filter((s) => s !== 'Other');
-        return [...withoutOther, value, 'Other'];
-      });
-    } catch (err) {
-      console.error('Failed to save custom payment source:', err);
-    }
-  };
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -183,11 +123,6 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
     setSuccess(false);
 
     try {
-      // Persist custom source if needed
-      if (sourceOfPayment === 'Other' && finalSource) {
-        await saveCustomSource(finalSource);
-      }
-
       // Run the Psychological Insights Engine
       const insight = analyseEntry({
         mood,
@@ -219,7 +154,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
       setAmount('');
       setReason('');
       setMood('Neutral');
-      setSourceOfPayment('GPay');
+      setSourceOfPayment(allPaymentSources[0] ?? '');
       setSourceOfPaymentOther('');
       setTimeout(() => setSuccess(false), 3000);
       onEntryAdded();
@@ -239,6 +174,14 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+  if (settingsLoading) {
+    return (
+      <div className="rounded-2xl p-6 shadow-lg border flex items-center justify-center min-h-[200px]" style={{ background: 'white', borderColor: 'rgba(131,197,190,0.35)' }}>
+        <p className="text-sm font-semibold" style={{ color: 'var(--pearlAqua)' }}>Loading settings…</p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="rounded-2xl p-6 shadow-lg border"
@@ -320,54 +263,22 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
             <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
               Category
             </label>
-            <div className="flex gap-2">
+            {allCategories.length === 0 ? (
+              <p className="text-xs px-4 py-3 rounded-xl border-2" style={{ color: 'var(--pearlAqua)', borderColor: 'var(--pearlAqua)', background: 'rgba(237,246,249,0.8)' }}>
+                No categories configured yet. Ask an admin to add some.
+              </p>
+            ) : (
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all"
                 style={inputStyle}
+                required
               >
                 {allCategories.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-              <button
-                type="button"
-                onClick={() => setShowAddCategory((v) => !v)}
-                title="Add custom category"
-                className="w-11 h-11 flex items-center justify-center rounded-xl border-2 flex-shrink-0 transition-all hover:scale-105"
-                style={{
-                  borderColor: showAddCategory ? 'var(--stormyTeal)' : 'var(--pearlAqua)',
-                  background:  showAddCategory ? 'var(--stormyTeal)' : 'rgba(237,246,249,0.8)',
-                  color:       showAddCategory ? 'white' : 'var(--stormyTeal)',
-                }}
-              >
-                {showAddCategory ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {showAddCategory && (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={newCategoryInput}
-                  onChange={(e) => setNewCategoryInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
-                  className="flex-1 px-3 py-2 rounded-xl border-2 text-sm outline-none transition-all"
-                  style={inputStyle}
-                  placeholder="e.g. Gym, Subscriptions…"
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  disabled={savingCategory || !newCategoryInput.trim()}
-                  className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
-                  style={{ background: 'var(--stormyTeal)' }}
-                >
-                  {savingCategory ? '…' : 'Add'}
-                </button>
-              </div>
             )}
           </div>
         </div>

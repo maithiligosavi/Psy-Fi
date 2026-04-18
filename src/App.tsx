@@ -7,6 +7,7 @@ import ChangesPage from './components/ChangesPage';
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './components/AdminDashboard';
 import UserManagement from './components/UserManagement';
+import GlobalSettingsManager from './components/GlobalSettingsManager';
 import ChangelogPage from './components/ChangelogPage';
 
 /** Loading splash — shared by all route guards */
@@ -102,6 +103,18 @@ function AppRoutes() {
           <AdminGuardRoute>
             <AdminRoute>
               <UserManagement />
+            </AdminRoute>
+          </AdminGuardRoute>
+        }
+      />
+
+      {/* Admin: Global Settings — categories & payment sources */}
+      <Route
+        path="/admin/settings"
+        element={
+          <AdminGuardRoute>
+            <AdminRoute>
+              <GlobalSettingsManager />
             </AdminRoute>
           </AdminGuardRoute>
         }

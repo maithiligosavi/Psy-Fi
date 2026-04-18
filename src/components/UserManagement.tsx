@@ -107,6 +107,9 @@ export default function UserManagement() {
                 <Link to="/admin/users" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white/20 text-white">
                   User Management
                 </Link>
+                <Link to="/admin/settings" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10">
+                  Global Settings
+                </Link>
               </div>
             </div>
 
@@ -124,12 +127,15 @@ export default function UserManagement() {
             </div>
           </div>
           {/* Mobile Nav */}
-          <div className="sm:hidden flex items-center gap-2 pb-3 pt-1 border-t border-white/10 mt-1">
-             <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10 w-full text-center">
+          <div className="sm:hidden flex items-center gap-1 pb-3 pt-1 border-t border-white/10 mt-1">
+             <Link to="/admin" className="px-2 py-1.5 rounded-lg text-xs font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10 flex-1 text-center">
                Metrics
              </Link>
-             <Link to="/admin/users" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white/20 text-white w-full text-center">
+             <Link to="/admin/users" className="px-2 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white/20 text-white flex-1 text-center">
                Users
+             </Link>
+             <Link to="/admin/settings" className="px-2 py-1.5 rounded-lg text-xs font-semibold transition-all text-white/70 hover:text-white hover:bg-white/10 flex-1 text-center">
+               Settings
              </Link>
           </div>
         </div>
