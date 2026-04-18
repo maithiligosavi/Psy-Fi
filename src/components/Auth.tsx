@@ -31,35 +31,18 @@ export default function Auth() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ backgroundColor: 'var(--aliceBlue)' }}
+      // Changed class from static bg color to the new utility class
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden auth-page-wrapper"
     >
-      {/* Abstract background shapes */}
+      {/* Abstract background shapes - Lowered opacity significantly for professionalism */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-20 blur-3xl"
+          className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-5 blur-3xl"
           style={{ background: 'var(--stormyTeal)' }}
         />
         <div
-          className="absolute top-1/3 -right-24 w-80 h-80 rounded-full opacity-25 blur-3xl"
+          className="absolute top-1/3 -right-24 w-80 h-80 rounded-full opacity-10 blur-3xl"
           style={{ background: 'var(--pearlAqua)' }}
-        />
-        <div
-          className="absolute -bottom-20 left-1/3 w-72 h-72 rounded-full opacity-20 blur-3xl"
-          style={{ background: 'var(--almondSilk)' }}
-        />
-        <div
-          className="absolute top-10 right-1/3 w-48 h-48 rounded-full opacity-15 blur-2xl"
-          style={{ background: 'var(--tangerineDream)' }}
-        />
-        {/* Decorative rings */}
-        <div
-          className="absolute top-16 left-16 w-64 h-64 rounded-full border-2 opacity-10"
-          style={{ borderColor: 'var(--stormyTeal)' }}
-        />
-        <div
-          className="absolute bottom-24 right-16 w-48 h-48 rounded-full border opacity-10"
-          style={{ borderColor: 'var(--pearlAqua)' }}
         />
       </div>
 
@@ -73,16 +56,14 @@ export default function Auth() {
             <Brain className="w-10 h-10 text-white" />
           </div>
           <h1
-            className="text-5xl font-extrabold mb-2 tracking-tight"
-            style={{ color: 'var(--stormyTeal)' }}
+            className="text-5xl font-extrabold mb-2 tracking-tight text-white" // Fixed contrast
           >
             Psy-Fi
           </h1>
-          <p className="text-base font-medium" style={{ color: 'var(--pearlAqua)' }}>
+          <p className="text-base font-medium text-white/80"> {/* Fixed contrast */}
             Mindful Finance · Psychological Spending Expense Tracker
           </p>
 
-          {/* Feature pills */}
           <div className="flex justify-center gap-3 mt-4">
             {[
               { icon: Leaf, label: 'Mindful' },
@@ -91,8 +72,7 @@ export default function Auth() {
             ].map(({ icon: Icon, label }) => (
               <span
                 key={label}
-                className="flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full"
-                style={{ background: 'var(--almondSilk)', color: 'var(--stormyTeal)' }}
+                className="flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white border border-white/20"
               >
                 <Icon className="w-3 h-3" />
                 {label}
@@ -101,31 +81,26 @@ export default function Auth() {
           </div>
         </div>
 
-        {/* Card */}
+        {/* Card using existing glass styles, refined contrast */}
         <div
-          className="glass-dark rounded-3xl shadow-2xl p-8"
-          style={{ background: 'rgba(0,109,119,0.08)', border: '1px solid rgba(131,197,190,0.3)' }}
+          className="glass-dark rounded-3xl shadow-2xl p-8 backdrop-blur-md"
+          style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
         >
           {/* Tab switcher */}
           <div
-            className="flex gap-2 mb-7 p-1 rounded-xl"
-            style={{ background: 'rgba(131,197,190,0.15)' }}
+            className="flex gap-2 mb-7 p-1 rounded-xl bg-black/10"
           >
             <button
               onClick={() => setIsSignUp(false)}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                !isSignUp ? 'shadow-md text-white' : 'text-pearlAqua hover:bg-white/10'
-              }`}
-              style={!isSignUp ? { background: 'var(--stormyTeal)', color: '#fff' } : { color: 'var(--stormyTeal)' }}
+              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${!isSignUp ? 'bg-white text-teal-900 shadow-md' : 'text-white/70 hover:bg-white/5'
+                }`}
             >
               Sign In
             </button>
             <button
               onClick={() => setIsSignUp(true)}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                isSignUp ? 'shadow-md text-white' : ''
-              }`}
-              style={isSignUp ? { background: 'var(--stormyTeal)', color: '#fff' } : { color: 'var(--stormyTeal)' }}
+              className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${isSignUp ? 'bg-white text-teal-900 shadow-md' : 'text-white/70 hover:bg-white/5'
+                }`}
             >
               Sign Up
             </button>
@@ -134,56 +109,41 @@ export default function Auth() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div>
-                <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
+                <label className="block text-sm font-semibold mb-1.5 text-white/90">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 text-sm font-medium outline-none transition-all focus:ring-2"
-                  style={{
-                    background: 'rgba(237,246,249,0.7)',
-                    borderColor: 'var(--pearlAqua)',
-                    color: 'var(--stormyTeal)',
-                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-white/20 text-sm font-medium outline-none transition-all bg-white/10 text-white placeholder:text-white/40 focus:bg-white/20"
                   placeholder="Your full name"
                   required={isSignUp}
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
+              <label className="block text-sm font-semibold mb-1.5 text-white/90">
                 Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 text-sm font-medium outline-none transition-all"
-                style={{
-                  background: 'rgba(237,246,249,0.7)',
-                  borderColor: 'var(--pearlAqua)',
-                  color: 'var(--stormyTeal)',
-                }}
+                className="w-full px-4 py-3 rounded-xl border border-white/20 text-sm font-medium outline-none transition-all bg-white/10 text-white placeholder:text-white/40 focus:bg-white/20"
                 placeholder="you@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--stormyTeal)' }}>
+              <label className="block text-sm font-semibold mb-1.5 text-white/90">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 text-sm font-medium outline-none transition-all"
-                style={{
-                  background: 'rgba(237,246,249,0.7)',
-                  borderColor: 'var(--pearlAqua)',
-                  color: 'var(--stormyTeal)',
-                }}
+                className="w-full px-4 py-3 rounded-xl border border-white/20 text-sm font-medium outline-none transition-all bg-white/10 text-white placeholder:text-white/40 focus:bg-white/20"
                 placeholder="••••••••"
                 required
               />
@@ -191,8 +151,7 @@ export default function Auth() {
 
             {error && (
               <div
-                className="p-3 rounded-xl border text-sm font-medium"
-                style={{ background: '#fff0ed', borderColor: 'var(--tangerineDream)', color: '#c0392b' }}
+                className="p-3 rounded-xl border border-red-500/50 bg-red-500/10 text-red-200 text-sm font-medium"
               >
                 {error}
               </div>
@@ -209,7 +168,7 @@ export default function Auth() {
           </form>
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: 'var(--pearlAqua)' }}>
+        <p className="text-center text-xs mt-6 text-white/60">
           Your financial mindfulness journey starts here ✦
         </p>
       </div>
