@@ -18,29 +18,49 @@ export default function Dashboard() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  const [auditEntries,  setAuditEntries]  = useState<AuditEntry[]>([]);
+  const [expensesList,  setExpensesList]  = useState<AuditEntry[]>([]);
+  const [totalSpent,    setTotalSpent]    = useState(0);
+  const [safeBalance,   setSafeBalance]   = useState(0);
   const [fixedRules,    setFixedRules]    = useState<FixedRule[]>([]);
   
   const { initialBudget, currentBalance, updateInitialBudget } = useBalance();
 
-  // ── 1. Real-time listener: audit_entries ──────────────────────────────────
+  // ── 1. Real-time listener: expensesList ──────────────────────────────────
   useEffect(() => {
-    if (!user) return;
-    const q = query(
-      collection(db, 'audit_entries'),
-      where('user_id', '==', user.uid),
-      orderBy('purchase_date', 'desc')
-    );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setAuditEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditEntry)));
-      },
-      (err) => console.error('audit_entries listener error:', err)
-    );
-    return () => unsub();
-  }, [user]);
+    if (!user?.uid) return;
 
+    const expensesQuery = query(
+      collection(db, 'audit_entries'),
+      where('user_id', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(
+      expensesQuery,
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        console.log("Snapshot received:", snapshot.size);
+        
+        const expensesArray = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as AuditEntry[];
+
+        // Sort manually to avoid Firestore composite index requirement
+        expensesArray.sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
+
+        // Crucial: Wrap the expense amount in Number()
+        const total = expensesArray.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        
+        // Update UI States immediately
+        setExpensesList(expensesArray);
+        setTotalSpent((prev) => total);
+        setSafeBalance((prev) => initialBudget - total);
+      },
+      (err) => console.error('expenses listener error:', err)
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid, initialBudget]);
   // ── 2. Real-time listener: fixed_rules ────────────────────────────────────
   useEffect(() => {
     if (!user) return;
@@ -60,7 +80,6 @@ export default function Dashboard() {
   }, [user]);
 
   // ── Derived values flowing to SafetyMeter ────────────────────────────────
-  const totalSpent    = auditEntries.reduce((sum, e) => sum + parseFloat(e.amount.toString()), 0);
   const fixedExpenses = fixedRules.reduce((sum, r)   => sum + parseFloat(r.amount.toString()), 0);
 
   const handleSignOut = async () => {
@@ -216,10 +235,10 @@ export default function Dashboard() {
             <ExpenseTracker
               onEntryAdded={() => {}}
               fixedRules={fixedRules}
-              auditEntries={auditEntries}
+              auditEntries={expensesList}
             />
-            <BehavioralHistory entries={auditEntries} />
-            <ReportsDashboard entries={auditEntries} fixedRules={fixedRules} />
+            <BehavioralHistory entries={expensesList} />
+            <ReportsDashboard entries={expensesList} fixedRules={fixedRules} />
           </div>
           <div className="space-y-6">
             {/* SafetyMeter reactively recalculates whenever auditEntries or fixedRules change */}
@@ -227,6 +246,7 @@ export default function Dashboard() {
               totalSpent={totalSpent}
               fixedExpenses={fixedExpenses}
               totalBalance={initialBudget}
+              safeBalance={safeBalance}
             />
             {/* onUpdate is a no-op now — onSnapshot in both Dashboard and FixedExpenses handle it */}
             <FixedExpenses onUpdate={() => {}} />

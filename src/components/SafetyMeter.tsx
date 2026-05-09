@@ -6,12 +6,11 @@ interface SafetyMeterProps {
   totalSpent: number;
   fixedExpenses: number;
   totalBalance: number;
+  safeBalance: number;
 }
 
-export default function SafetyMeter({ totalSpent, fixedExpenses, totalBalance }: SafetyMeterProps) {
+export default function SafetyMeter({ totalSpent, fixedExpenses, totalBalance, safeBalance }: SafetyMeterProps) {
   const [animatedValue, setAnimatedValue] = useState(0);
-
-  const safeBalance  = totalBalance - fixedExpenses - totalSpent;
   const percentage   = Math.max(0, Math.min(100, (safeBalance / Math.max(totalBalance, 1)) * 100));
 
   useEffect(() => {

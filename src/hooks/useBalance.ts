@@ -30,7 +30,10 @@ export function useBalance() {
       collection(db, 'audit_entries'),
       where('user_id', '==', user.uid)
     );
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(
+      q, 
+      { includeMetadataChanges: true },
+      (snap) => {
       let sum = 0;
       snap.docs.forEach((d) => {
         const data = d.data();
