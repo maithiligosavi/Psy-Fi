@@ -22,7 +22,7 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
 
   const [expenseName, setExpenseName] = useState('');
   const [amount, setAmount] = useState('');
-  const [frequency, setFrequency] = useState<'Weekly' | 'Monthly'>('Monthly');
+  const [frequency, setFrequency] = useState<'Weekly' | 'Monthly' | 'Annually'>('Monthly');
   const [dueDay, setDueDay] = useState('1');
   const [category, setCategory] = useState('Rent');
 
@@ -80,6 +80,7 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
 
   const totalMonthly = rules.filter(r => r.frequency === 'Monthly').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
   const totalWeekly  = rules.filter(r => r.frequency === 'Weekly').reduce((s, r)  => s + parseFloat(r.amount.toString()), 0);
+  const totalAnnually = rules.filter(r => r.frequency === 'Annually').reduce((s, r)  => s + parseFloat(r.amount.toString()), 0);
   const paidCount    = rules.filter(r => r.is_paid).length;
 
   const inputStyle: React.CSSProperties = {
@@ -121,17 +122,23 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
       </div>
 
       {/* Totals */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl p-3 border" style={{ background: '#fff7ed', borderColor: 'var(--tangerineDream)' }}>
-          <div className="text-xs font-semibold mb-1" style={{ color: 'var(--tangerineDream)' }}>Monthly Total</div>
+          <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--tangerineDream)' }}>Monthly</div>
           <div className="text-lg font-extrabold" style={{ color: 'var(--tangerineDream)' }}>
             {formatINR(totalMonthly)}
           </div>
         </div>
         <div className="rounded-xl p-3 border" style={{ background: 'rgba(0,109,119,0.05)', borderColor: 'var(--pearlAqua)' }}>
-          <div className="text-xs font-semibold mb-1" style={{ color: 'var(--stormyTeal)' }}>Weekly Total</div>
+          <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--stormyTeal)' }}>Weekly</div>
           <div className="text-lg font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
             {formatINR(totalWeekly)}
+          </div>
+        </div>
+        <div className="rounded-xl p-3 border" style={{ background: 'rgba(131,197,190,0.1)', borderColor: 'var(--pearlAqua)' }}>
+          <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--stormyTeal)' }}>Annually</div>
+          <div className="text-lg font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
+            {formatINR(totalAnnually)}
           </div>
         </div>
       </div>
@@ -171,12 +178,13 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
           <div className="grid grid-cols-2 gap-3">
             <select
               value={frequency}
-              onChange={(e) => setFrequency(e.target.value as 'Weekly' | 'Monthly')}
+              onChange={(e) => setFrequency(e.target.value as 'Weekly' | 'Monthly' | 'Annually')}
               className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none"
               style={inputStyle}
             >
               <option value="Weekly">Weekly</option>
               <option value="Monthly">Monthly</option>
+              <option value="Annually">Annually</option>
             </select>
             <input
               type="number"

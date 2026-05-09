@@ -58,7 +58,7 @@ function FlipCard({ entry }: FlipCardProps) {
 
   return (
     <div className="relative h-52 cursor-pointer perspective-1000" onClick={() => setIsFlipped(!isFlipped)}>
-      <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+      <div className={`relative w-full h-full transition-transform duration-1000 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
 
         {/* ── Front ── */}
         <div className="absolute w-full h-full backface-hidden">

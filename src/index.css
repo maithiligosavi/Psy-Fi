@@ -6,11 +6,11 @@
 
 /* ── CSS Custom Properties ─────────────────────────────────────────────────── */
 :root {
-  --stormyTeal:    #006d77;
-  --pearlAqua:     #83c5be;
-  --aliceBlue:     #edf6f9;
-  --almondSilk:    #ffddd2;
-  --tangerineDream:#e29578;
+  --stormyTeal: #006d77;
+  --pearlAqua: #83c5be;
+  --aliceBlue: #edf6f9;
+  --almondSilk: #ffddd2;
+  --tangerineDream: #e29578;
 }
 
 /* ── 3D Flip Card Utilities ─────────────────────────────────────────────────── */
@@ -18,12 +18,15 @@
   .perspective-1000 {
     perspective: 1000px;
   }
+
   .transform-style-3d {
     transform-style: preserve-3d;
   }
+
   .backface-hidden {
     backface-visibility: hidden;
   }
+
   .rotate-y-180 {
     transform: rotateY(180deg);
   }
@@ -33,14 +36,17 @@
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(0,109,119,0.1);
+  background: rgba(0, 109, 119, 0.1);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--pearlAqua);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--stormyTeal);
 }
@@ -58,4 +64,16 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(131, 197, 190, 0.3);
+}
+
+/* ── Auth Page Background (Professional Fintech) ──────────────────────────── */
+.auth-page-wrapper {
+  /* This utility uses the professional gradient image */
+  /* Replaced old color logic with linear gradient over the image */
+  background: linear-gradient(rgba(0, 109, 119, 0.9)),
+    url('/login-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }

@@ -177,7 +177,13 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+    const intervalId = setInterval(() => {
+      loadData();
+    }, 10000);
+    return () => clearInterval(intervalId);
+  }, [loadData]);
 
   const handleRefresh = () => {
     setRefreshing(true);

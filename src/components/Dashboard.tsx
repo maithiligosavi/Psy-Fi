@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useBalance } from '../hooks/useBalance';
 import {
   collection, query, where, orderBy, onSnapshot,
-  doc, getDoc, setDoc,
 } from 'firebase/firestore';
-import { db, AuditEntry, FixedRule } from '../lib/firebase';
+import { db, AuditEntry, FixedRule, formatINR } from '../lib/firebase';
 import ExpenseTracker from './ExpenseTracker';
 import SafetyMeter from './SafetyMeter';
 import BehavioralHistory from './BehavioralHistory';
@@ -18,46 +18,50 @@ export default function Dashboard() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  const [auditEntries,  setAuditEntries]  = useState<AuditEntry[]>([]);
+  const [expensesList,  setExpensesList]  = useState<AuditEntry[]>([]);
+  const [totalSpent,    setTotalSpent]    = useState(0);
+  const [safeBalance,   setSafeBalance]   = useState(0);
   const [fixedRules,    setFixedRules]    = useState<FixedRule[]>([]);
-  const [totalBalance,  setTotalBalance]  = useState(50000);
-  const balanceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const { initialBudget, currentBalance, updateInitialBudget } = useBalance();
 
-  // ── 1. Load persisted balance once on mount ───────────────────────────────
+  // ── 1. Real-time listener: expensesList ──────────────────────────────────
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, 'user_settings', user.uid));
-        if (snap.exists()) {
-          const saved = snap.data()?.total_balance;
-          if (typeof saved === 'number') setTotalBalance(saved);
-        }
-      } catch (err) {
-        console.error('Failed to load balance:', err);
-      }
-    })();
-  }, [user]);
+    if (!user?.uid) return;
 
-  // ── 2. Real-time listener: audit_entries ──────────────────────────────────
-  useEffect(() => {
-    if (!user) return;
-    const q = query(
+    const expensesQuery = query(
       collection(db, 'audit_entries'),
-      where('user_id', '==', user.uid),
-      orderBy('purchase_date', 'desc')
+      where('user_id', '==', user.uid)
     );
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setAuditEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AuditEntry)));
-      },
-      (err) => console.error('audit_entries listener error:', err)
-    );
-    return () => unsub();
-  }, [user]);
 
-  // ── 3. Real-time listener: fixed_rules ────────────────────────────────────
+    const unsubscribe = onSnapshot(
+      expensesQuery,
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        console.log("Snapshot received:", snapshot.size);
+        
+        const expensesArray = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as AuditEntry[];
+
+        // Sort manually to avoid Firestore composite index requirement
+        expensesArray.sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
+
+        // Crucial: Wrap the expense amount in Number()
+        const total = expensesArray.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        
+        // Update UI States immediately
+        setExpensesList(expensesArray);
+        setTotalSpent((prev) => total);
+        setSafeBalance((prev) => initialBudget - total);
+      },
+      (err) => console.error('expenses listener error:', err)
+    );
+
+    return () => unsubscribe();
+  }, [user?.uid, initialBudget]);
+  // ── 2. Real-time listener: fixed_rules ────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -75,25 +79,7 @@ export default function Dashboard() {
     return () => unsub();
   }, [user]);
 
-  // ── 4. Persist balance to Firestore (debounced 600 ms) ───────────────────
-  const persistBalance = useCallback((value: number) => {
-    if (!user) return;
-    if (balanceDebounceRef.current) clearTimeout(balanceDebounceRef.current);
-    balanceDebounceRef.current = setTimeout(async () => {
-      try {
-        await setDoc(
-          doc(db, 'user_settings', user.uid),
-          { total_balance: value },
-          { merge: true }
-        );
-      } catch (err) {
-        console.error('Failed to persist balance:', err);
-      }
-    }, 600);
-  }, [user]);
-
   // ── Derived values flowing to SafetyMeter ────────────────────────────────
-  const totalSpent    = auditEntries.reduce((sum, e) => sum + parseFloat(e.amount.toString()), 0);
   const fixedExpenses = fixedRules.reduce((sum, r)   => sum + parseFloat(r.amount.toString()), 0);
 
   const handleSignOut = async () => {
@@ -170,23 +156,31 @@ export default function Dashboard() {
 
             {/* Right controls */}
             <div className="flex items-center gap-3">
-              {/* Balance input */}
+              {/* Balance input & display */}
               <div
-                className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                className="flex items-center gap-3 px-3 py-2 rounded-xl"
                 style={{ background: 'rgba(131,197,190,0.15)', border: '1px solid rgba(131,197,190,0.3)' }}
               >
-                <Wallet className="w-4 h-4" style={{ color: 'var(--pearlAqua)' }} />
-                <div>
-                  <div className="text-xs font-medium" style={{ color: 'var(--pearlAqua)' }}>Balance (₹)</div>
+                <Wallet className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--pearlAqua)' }} />
+                <div className="flex flex-col">
+                  <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--pearlAqua)' }}>
+                    Current Balance
+                  </div>
+                  <div className="text-sm font-extrabold text-white">
+                    {formatINR(currentBalance)}
+                  </div>
+                </div>
+                <div className="h-6 w-px bg-white/20 mx-1 hidden sm:block"></div>
+                <div className="flex-col hidden sm:flex">
+                  <div className="text-[10px] font-medium" style={{ color: 'var(--pearlAqua)' }}>Budget (₹)</div>
                   <input
                     type="number"
-                    value={totalBalance}
+                    value={initialBudget}
                     onChange={(e) => {
                       const val = parseFloat(e.target.value) || 0;
-                      setTotalBalance(val);
-                      persistBalance(val);
+                      updateInitialBudget(val);
                     }}
-                    className="w-28 bg-transparent text-white text-sm font-bold outline-none"
+                    className="w-20 bg-transparent text-white/80 text-xs font-bold outline-none"
                     placeholder="₹0"
                   />
                 </div>
@@ -241,17 +235,18 @@ export default function Dashboard() {
             <ExpenseTracker
               onEntryAdded={() => {}}
               fixedRules={fixedRules}
-              auditEntries={auditEntries}
+              auditEntries={expensesList}
             />
-            <BehavioralHistory entries={auditEntries} />
-            <ReportsDashboard entries={auditEntries} fixedRules={fixedRules} />
+            <BehavioralHistory entries={expensesList} />
+            <ReportsDashboard entries={expensesList} fixedRules={fixedRules} />
           </div>
           <div className="space-y-6">
             {/* SafetyMeter reactively recalculates whenever auditEntries or fixedRules change */}
             <SafetyMeter
               totalSpent={totalSpent}
               fixedExpenses={fixedExpenses}
-              totalBalance={totalBalance}
+              totalBalance={initialBudget}
+              safeBalance={safeBalance}
             />
             {/* onUpdate is a no-op now — onSnapshot in both Dashboard and FixedExpenses handle it */}
             <FixedExpenses onUpdate={() => {}} />
