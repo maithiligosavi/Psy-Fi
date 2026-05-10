@@ -6,11 +6,7 @@ interface ReportsDashboardProps {
   fixedRules: FixedRule[];
 }
 
-/**
- * ReportsDashboard — placeholder for the spending reports feature.
- * Shows a coming-soon card styled consistently with the rest of the app.
- * Replace this component with real report content as the feature develops.
- */
+
 export default function ReportsDashboard({ entries, fixedRules }: ReportsDashboardProps) {
   const totalSpent = entries.reduce((sum, e) => sum + Number(e.amount), 0);
   const categoryMap: Record<string, number> = {};

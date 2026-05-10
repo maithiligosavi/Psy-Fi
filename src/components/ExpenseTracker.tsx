@@ -11,7 +11,7 @@ import {
   AlertTriangle, ShieldCheck, Plus, X, Trash2, ChevronDown
 } from 'lucide-react';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Constants 
 
 const MOODS = [
   { value: 'Happy', icon: Smile, color: '#10b981' },
@@ -22,7 +22,7 @@ const MOODS = [
   { value: 'Bored', icon: Meh, color: '#94a3b8' },
 ];
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types 
 
 interface ExpenseTrackerProps {
   onEntryAdded: () => void;
@@ -30,34 +30,34 @@ interface ExpenseTrackerProps {
   auditEntries: AuditEntry[];
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Component 
 
 export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries }: ExpenseTrackerProps) {
   const { user } = useAuth();
 
-  // ── Form state ────────────────────────────────────────────────────────────
+  // ── Form state 
   const [productService, setProductService] = useState('');
-  const [amount, setAmount]                 = useState('');
-  const [category, setCategory]             = useState('');
-  const [reason, setReason]                 = useState('');
-  const [mood, setMood]                     = useState('Neutral');
-  const [sourceOfPayment, setSourceOfPayment]           = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [reason, setReason] = useState('');
+  const [mood, setMood] = useState('Neutral');
+  const [sourceOfPayment, setSourceOfPayment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
 
-  // ── Global & Personal settings ──────────────────────────────────────────
-  const [globalCategories, setGlobalCategories]         = useState<string[]>([]);
+  // ── Global & Personal settings 
+  const [globalCategories, setGlobalCategories] = useState<string[]>([]);
   const [globalPaymentSources, setGlobalPaymentSources] = useState<string[]>([]);
-  const [customCategories, setCustomCategories]         = useState<string[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [customPaymentSources, setCustomPaymentSources] = useState<string[]>([]);
-  
+
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [globalLoaded, setGlobalLoaded] = useState(false);
   const [personalLoaded, setPersonalLoaded] = useState(false);
 
-  // ── UI states for Custom entries ──────────────────────────────────────────
+  // ── UI states for Custom entries 
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [savingCategory, setSavingCategory] = useState(false);
@@ -70,7 +70,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
   const allCategories = Array.from(new Set([...globalCategories, ...customCategories]));
   const allPaymentSources = Array.from(new Set([...globalPaymentSources, ...customPaymentSources]));
 
-  // ── Real-time listener on global_settings ────────────────────────────────
+  // ── Real-time listener on global_settings 
   useEffect(() => {
     const globalRef = doc(db, 'global_settings', 'dropdown_options');
     const unsub = onSnapshot(
@@ -94,7 +94,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
     return () => unsub();
   }, []);
 
-  // ── Real-time listener on personal user_settings ────────────────────────
+  // ── Real-time listener on personal user_settings 
   useEffect(() => {
     if (!user) {
       setPersonalLoaded(true);
@@ -133,8 +133,8 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
       setCategory((prev) => (prev && allCategories.includes(prev) ? prev : allCategories[0] ?? ''));
       setSourceOfPayment((prev) => (prev && allPaymentSources.includes(prev) ? prev : allPaymentSources[0] ?? ''));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsLoading, globalLoaded, personalLoaded]); 
+
+  }, [settingsLoading, globalLoaded, personalLoaded]);
 
   const timeoutRef = useRef<NodeJS.Timeout>();
 
@@ -152,13 +152,13 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
       .filter((e) => e.purchase_date.startsWith(monthYear))
       .map((e) => e.product_service?.toLowerCase() ?? '');
     const unpaid = fixedRules.filter(
-      (r) => !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
+      (r) => !r.is_paid && !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
     );
     return unpaid.map((r) => r.expense_name);
   }, [user, auditEntries, fixedRules]);
 
-  // ── Custom Category / Source Handlers ─────────────────────────────────────
-  
+  // ── Custom Category / Source Handlers 
+
   const handleAddCategory = async () => {
     const trimmed = newCategoryInput.trim();
     if (!trimmed || !user) return;
@@ -431,14 +431,14 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
                       <span className="truncate">{category || 'Select category'}</span>
                       <ChevronDown className="w-4 h-4 opacity-50 flex-shrink-0 ml-2" />
                     </button>
-                    
+
                     {dropdownOpen && (
                       <>
-                        <div 
+                        <div
                           className="fixed inset-0 z-10"
                           onClick={() => setDropdownOpen(false)}
                         />
-                        <div 
+                        <div
                           className="absolute left-0 right-0 mt-2 py-2 rounded-xl border-2 shadow-xl z-20 max-h-60 overflow-y-auto"
                           style={{ background: 'white', borderColor: 'var(--pearlAqua)' }}
                         >
@@ -448,7 +448,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
                           {allCategories.map((c) => {
                             const isPersonal = customCategories.includes(c) && !globalCategories.includes(c);
                             return (
-                              <div 
+                              <div
                                 key={c}
                                 className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 transition-colors group cursor-pointer"
                                 onClick={() => {
@@ -651,4 +651,4 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
       </form>
     </div>
   );
-}
+}

@@ -406,14 +406,14 @@ export default function ChangesPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // ── Edit handler — onSnapshot will sync local state automatically ────────────
+  // ── Edit handler — onSnapshot will sync local state automatically 
   const handleSave = async (updated: Partial<AuditEntry>) => {
     if (!editTarget) return;
     await updateDoc(doc(db, 'audit_entries', editTarget.id), updated);
     // onSnapshot will push the update; no manual state patch needed
   };
 
-  // ── Delete handler ───────────────────────────────────────────────────────────
+  // ── Delete handler 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     await deleteDoc(doc(db, 'audit_entries', deleteTarget.id));

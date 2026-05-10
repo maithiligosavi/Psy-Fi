@@ -52,7 +52,7 @@ export interface FixedRule {
   user_id: string;
   expense_name: string;
   amount: number;
-  frequency: 'Weekly' | 'Monthly';
+  frequency: 'Weekly' | 'Monthly' | 'Annually';
   due_day: number;
   category: string;
   is_paid?: boolean;

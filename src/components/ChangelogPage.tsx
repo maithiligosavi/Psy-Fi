@@ -59,10 +59,7 @@ const changes = [
   },
 ];
 
-/**
- * ChangelogPage — Admin-only version history / release notes.
- * Accessible at /changelog, guarded by AdminGuardRoute in App.tsx.
- */
+
 export default function ChangelogPage() {
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--aliceBlue)' }}>
