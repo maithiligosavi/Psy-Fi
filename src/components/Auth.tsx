@@ -169,7 +169,7 @@ export default function Auth() {
         </div>
 
         <p className="text-center text-xs mt-6 text-white/60">
-          Your financial mindfulness journey starts here ✦
+          Your financial mindfulness journey starts here
         </p>
       </div>
     </div>

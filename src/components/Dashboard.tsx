@@ -11,7 +11,7 @@ import SafetyMeter from './SafetyMeter';
 import BehavioralHistory from './BehavioralHistory';
 import FixedExpenses from './FixedExpenses';
 import ReportsDashboard from './ReportsDashboard';
-import { LogOut, Brain, Wallet, ShieldCheck, GitBranch } from 'lucide-react';
+import { LogOut, Brain, Wallet, ShieldCheck, GitBranch, Pencil } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth();
@@ -149,7 +149,6 @@ export default function Dashboard() {
                     : { background: 'transparent', color: 'rgba(255,255,255,0.65)' }
                 }
               >
-                <GitBranch className="w-3.5 h-3.5" />
                 Changes
               </button>
             </div>
@@ -172,7 +171,9 @@ export default function Dashboard() {
                 </div>
                 <div className="h-6 w-px bg-white/20 mx-1 hidden sm:block"></div>
                 <div className="flex-col hidden sm:flex">
-                  <div className="text-[10px] font-medium" style={{ color: 'var(--pearlAqua)' }}>Budget (₹)</div>
+                  <div className="text-[10px] font-medium flex items-center gap-1" style={{ color: 'var(--pearlAqua)' }}>
+                    Enter budget <Pencil className="w-3 h-3" />
+                  </div>
                   <input
                     type="number"
                     value={initialBudget}
