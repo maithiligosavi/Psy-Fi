@@ -18,7 +18,7 @@ export default function ReportsDashboard({ entries, fixedRules }: ReportsDashboa
     categoryMap[e.spending_category] = (categoryMap[e.spending_category] ?? 0) + Number(e.amount);
   }
   const topCategory = Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—';
-  const fixedTotal  = fixedRules.reduce((sum, r) => sum + Number(r.amount), 0);
+  const fixedTotal = fixedRules.reduce((sum, r) => sum + Number(r.amount), 0);
 
   return (
     <div
@@ -76,9 +76,7 @@ export default function ReportsDashboard({ entries, fixedRules }: ReportsDashboa
         </span>
       </div>
 
-      <p className="mt-3 text-xs text-center" style={{ color: 'var(--pearlAqua)' }}>
-        📊 Detailed weekly &amp; monthly reports coming soon
-      </p>
+
     </div>
   );
 }

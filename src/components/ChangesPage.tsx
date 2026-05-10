@@ -493,7 +493,6 @@ export default function ChangesPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                 style={{ background: 'rgba(255,255,255,0.18)', color: 'white' }}
               >
-                <GitBranch className="w-3.5 h-3.5" />
                 Changes
               </button>
             </div>
@@ -526,12 +525,6 @@ export default function ChangesPage() {
           style={{ background: 'linear-gradient(135deg, #006d77)', color: 'white' }}
         >
           <div className="flex items-start gap-4">
-            <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}
-            >
-              <GitBranch className="w-7 h-7 text-white" />
-            </div>
             <div className="flex-1">
               <h2 className="text-xl font-extrabold mb-1">Expense Tracker Changes Log</h2>
               <p className="text-sm opacity-80">
