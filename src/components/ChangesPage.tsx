@@ -5,7 +5,7 @@ import { db, AuditEntry, formatINR } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import {
   Brain, ArrowLeft, GitBranch, Tag, CreditCard,
-  RefreshCw, SearchX, Sparkles, Pencil, Trash2, X, Check,
+  SearchX, Sparkles, Pencil, Trash2, X, Check,
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES = [
@@ -532,13 +532,6 @@ export default function ChangesPage() {
                 inputs that were not part of the original pre-defined options. You can edit or delete any entry here.
               </p>
             </div>
-            <div
-              title="Live — updates automatically"
-              className="p-2.5 rounded-xl flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)' }}
-            >
-              <RefreshCw className={`w-5 h-5 text-white ${loading ? 'animate-spin' : ''}`} />
-            </div>
           </div>
 
           {/* Stats row */}
@@ -585,7 +578,10 @@ export default function ChangesPage() {
         {/* Content */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <RefreshCw className="w-8 h-8 animate-spin" style={{ color: 'var(--pearlAqua)' }} />
+            <div
+              className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
+              style={{ borderColor: 'var(--pearlAqua)', borderTopColor: 'transparent' }}
+            />
             <p className="text-sm font-medium" style={{ color: 'var(--pearlAqua)' }}>
               Scanning for custom entries…
             </p>
