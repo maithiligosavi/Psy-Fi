@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   doc, onSnapshot, updateDoc, setDoc, arrayUnion, arrayRemove,
 } from 'firebase/firestore';
@@ -19,6 +19,7 @@ const GLOBAL_SETTINGS_DOC = doc(db, 'global_settings', 'dropdown_options');
 interface GlobalSettings {
   categories: string[];
   payment_sources: string[];
+  fixed_expenses: string[];
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -139,9 +140,21 @@ function AddItemRow({ value, onChange, onAdd, adding, placeholder, successItem }
 export default function GlobalSettingsManager() {
   const { profile, signOut } = useAuth();
 
-  const [settings, setSettings] = useState<GlobalSettings>({ categories: [], payment_sources: [] });
+  const [settings, setSettings] = useState<GlobalSettings>({ categories: [], payment_sources: [], fixed_expenses: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const categoryTimeoutRef = useRef<NodeJS.Timeout>();
+  const sourceTimeoutRef = useRef<NodeJS.Timeout>();
+  const expenseTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    return () => {
+      if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
+      if (sourceTimeoutRef.current) clearTimeout(sourceTimeoutRef.current);
+      if (expenseTimeoutRef.current) clearTimeout(expenseTimeoutRef.current);
+    };
+  }, []);
 
   // Category add state
   const [newCategory, setNewCategory] = useState('');
@@ -155,6 +168,12 @@ export default function GlobalSettingsManager() {
   const [lastAddedSource, setLastAddedSource] = useState<string | null>(null);
   const [removingSource, setRemovingSource] = useState<string | null>(null);
 
+  // Fixed Expense add state
+  const [newExpense, setNewExpense] = useState('');
+  const [addingExpense, setAddingExpense] = useState(false);
+  const [lastAddedExpense, setLastAddedExpense] = useState<string | null>(null);
+  const [removingExpense, setRemovingExpense] = useState<string | null>(null);
+
   // ── Real-time listener on global_settings ──────────────────────────────────
   useEffect(() => {
     const unsub = onSnapshot(
@@ -165,10 +184,11 @@ export default function GlobalSettingsManager() {
           setSettings({
             categories: Array.isArray(data.categories) ? data.categories : [],
             payment_sources: Array.isArray(data.payment_sources) ? data.payment_sources : [],
+            fixed_expenses: Array.isArray(data.fixed_expenses) ? data.fixed_expenses : [],
           });
         } else {
           // Document doesn't exist yet; show empty state
-          setSettings({ categories: [], payment_sources: [] });
+          setSettings({ categories: [], payment_sources: [], fixed_expenses: [] });
         }
         setLoading(false);
       },
@@ -201,7 +221,8 @@ export default function GlobalSettingsManager() {
       await updateDoc(GLOBAL_SETTINGS_DOC, { categories: arrayUnion(trimmed) });
       setNewCategory('');
       setLastAddedCategory(trimmed);
-      setTimeout(() => setLastAddedCategory(null), 2000);
+      if (categoryTimeoutRef.current) clearTimeout(categoryTimeoutRef.current);
+      categoryTimeoutRef.current = setTimeout(() => setLastAddedCategory(null), 2000);
     } catch (err) {
       console.error('Add category error:', err);
       setError('Failed to add category.');
@@ -239,7 +260,8 @@ export default function GlobalSettingsManager() {
       await updateDoc(GLOBAL_SETTINGS_DOC, { payment_sources: arrayUnion(trimmed) });
       setNewSource('');
       setLastAddedSource(trimmed);
-      setTimeout(() => setLastAddedSource(null), 2000);
+      if (sourceTimeoutRef.current) clearTimeout(sourceTimeoutRef.current);
+      sourceTimeoutRef.current = setTimeout(() => setLastAddedSource(null), 2000);
     } catch (err) {
       console.error('Add source error:', err);
       setError('Failed to add payment source.');
@@ -259,6 +281,45 @@ export default function GlobalSettingsManager() {
       setError('Failed to remove payment source.');
     } finally {
       setRemovingSource(null);
+    }
+  };
+
+  // ── Add Fixed Expense ──────────────────────────────────────────────────────
+  const handleAddExpense = async () => {
+    const trimmed = newExpense.trim();
+    if (!trimmed || addingExpense) return;
+    if (settings.fixed_expenses.includes(trimmed)) {
+      setError(`"${trimmed}" is already in the list.`);
+      return;
+    }
+    setAddingExpense(true);
+    setError('');
+    try {
+      await ensureDoc();
+      await updateDoc(GLOBAL_SETTINGS_DOC, { fixed_expenses: arrayUnion(trimmed) });
+      setNewExpense('');
+      setLastAddedExpense(trimmed);
+      if (expenseTimeoutRef.current) clearTimeout(expenseTimeoutRef.current);
+      expenseTimeoutRef.current = setTimeout(() => setLastAddedExpense(null), 2000);
+    } catch (err) {
+      console.error('Add expense error:', err);
+      setError('Failed to add fixed expense.');
+    } finally {
+      setAddingExpense(false);
+    }
+  };
+
+  // ── Remove Fixed Expense ───────────────────────────────────────────────────
+  const handleRemoveExpense = async (item: string) => {
+    setRemovingExpense(item);
+    setError('');
+    try {
+      await updateDoc(GLOBAL_SETTINGS_DOC, { fixed_expenses: arrayRemove(item) });
+    } catch (err) {
+      console.error('Remove expense error:', err);
+      setError('Failed to remove fixed expense.');
+    } finally {
+      setRemovingExpense(null);
     }
   };
 
@@ -480,6 +541,40 @@ export default function GlobalSettingsManager() {
           {lastAddedSource && (
             <p className="text-xs mt-2 font-semibold" style={{ color: '#10b981' }}>
               ✅ "{lastAddedSource}" added successfully.
+            </p>
+          )}
+        </section>
+
+        {/* ── Fixed Expenses Panel ── */}
+        <section
+          className="rounded-2xl p-6 shadow-md border"
+          style={{ background: 'white', borderColor: 'rgba(131,197,190,0.35)' }}
+        >
+          <SectionHeader
+            icon={Tag}
+            title="Fixed Expenses"
+            subtitle={`${settings.fixed_expenses.length} item${settings.fixed_expenses.length !== 1 ? 's' : ''} — shown as fixed expense templates for all users`}
+          />
+
+          <TagList
+            items={settings.fixed_expenses}
+            onRemove={handleRemoveExpense}
+            removing={removingExpense}
+            accentColor="var(--tangerineDream)"
+          />
+
+          <AddItemRow
+            value={newExpense}
+            onChange={setNewExpense}
+            onAdd={handleAddExpense}
+            adding={addingExpense}
+            placeholder="e.g. Rent, Netflix, Gym…"
+            successItem={lastAddedExpense}
+          />
+
+          {lastAddedExpense && (
+            <p className="text-xs mt-2 font-semibold" style={{ color: '#10b981' }}>
+              ✅ "{lastAddedExpense}" added successfully.
             </p>
           )}
         </section>

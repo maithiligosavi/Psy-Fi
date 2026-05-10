@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, setDoc } from 'firebase/firestore';
 import { db, FixedRule, formatINR } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Calendar, Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
+import { Calendar, Trash2, Plus, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
 
 interface FixedExpensesProps {
   onUpdate: () => void;
 }
-
-const CATEGORIES = ['Rent', 'Loan', 'Subscription', 'Insurance', 'Utilities', 'Other'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   Rent: '🏠', Loan: '🏦', Subscription: '📱', Insurance: '🛡️', Utilities: '⚡', Other: '📋',
@@ -24,7 +22,6 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
   const [amount, setAmount] = useState('');
   const [frequency, setFrequency] = useState<'Weekly' | 'Monthly' | 'Annually'>('Monthly');
   const [dueDay, setDueDay] = useState('1');
-  const [category, setCategory] = useState('Rent');
 
   // ── Real-time listener: rules update instantly without page refresh ──
   useEffect(() => {
@@ -40,6 +37,78 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
     return () => unsubscribe();
   }, [user]);
 
+  const [globalExpenses, setGlobalExpenses] = useState<string[]>([]);
+  const [customExpenses, setCustomExpenses] = useState<string[]>([]);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [globalLoaded, setGlobalLoaded] = useState(false);
+  const [personalLoaded, setPersonalLoaded] = useState(false);
+
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpenseInput, setNewExpenseInput] = useState('');
+  const [savingExpense, setSavingExpense] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const allExpenses = Array.from(new Set([...globalExpenses, ...customExpenses]));
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'global_settings', 'dropdown_options'), (snap) => {
+      if (snap.exists()) setGlobalExpenses(Array.isArray(snap.data().fixed_expenses) ? snap.data().fixed_expenses : []);
+      else setGlobalExpenses([]);
+      setGlobalLoaded(true);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!user) { setPersonalLoaded(true); return; }
+    const unsub = onSnapshot(doc(db, 'user_settings', user.uid), (snap) => {
+      if (snap.exists()) setCustomExpenses(Array.isArray(snap.data().custom_fixed_expenses) ? snap.data().custom_fixed_expenses : []);
+      else setCustomExpenses([]);
+      setPersonalLoaded(true);
+    });
+    return () => unsub();
+  }, [user]);
+
+  useEffect(() => {
+    if (globalLoaded && personalLoaded) setSettingsLoading(false);
+  }, [globalLoaded, personalLoaded]);
+
+  useEffect(() => {
+    if (!settingsLoading && (!expenseName || !allExpenses.includes(expenseName))) {
+      setExpenseName(allExpenses[0] || '');
+    }
+  }, [settingsLoading, allExpenses, expenseName]);
+
+  const handleAddCustomExpense = async () => {
+    const trimmed = newExpenseInput.trim();
+    if (!trimmed || !user) return;
+    if (allExpenses.includes(trimmed)) {
+      setExpenseName(trimmed);
+      setShowAddExpense(false);
+      setNewExpenseInput('');
+      return;
+    }
+    setSavingExpense(true);
+    try {
+      const ref = doc(db, 'user_settings', user.uid);
+      await setDoc(ref, { custom_fixed_expenses: arrayUnion(trimmed) }, { merge: true });
+      setExpenseName(trimmed);
+      setShowAddExpense(false);
+      setNewExpenseInput('');
+    } catch (e) { console.error(e); } finally { setSavingExpense(false); }
+  };
+
+  const deleteCustomExpense = async (cat: string) => {
+    if (!user) return;
+    try {
+      const ref = doc(db, 'user_settings', user.uid);
+      await updateDoc(ref, { custom_fixed_expenses: arrayRemove(cat) });
+      if (expenseName === cat) {
+        setExpenseName(allExpenses.filter(c => c !== cat)[0] || '');
+      }
+    } catch (e) { console.error(e); }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -51,12 +120,12 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
         amount: parseFloat(amount),
         frequency,
         due_day: parseInt(dueDay),
-        category,
+        category: 'Other',
         is_paid: false,
         created_at: new Date().toISOString(),
       });
       // onSnapshot will update `rules` automatically — no manual reload needed
-      setExpenseName(''); setAmount(''); setFrequency('Monthly'); setDueDay('1'); setCategory('Rent');
+      setExpenseName(''); setAmount(''); setFrequency('Monthly'); setDueDay('1');
       setShowForm(false);
       onUpdate();
     } catch (err) {
@@ -79,9 +148,9 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
   };
 
   const totalMonthly = rules.filter(r => r.frequency === 'Monthly').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
-  const totalWeekly  = rules.filter(r => r.frequency === 'Weekly').reduce((s, r)  => s + parseFloat(r.amount.toString()), 0);
-  const totalAnnually = rules.filter(r => r.frequency === 'Annually').reduce((s, r)  => s + parseFloat(r.amount.toString()), 0);
-  const paidCount    = rules.filter(r => r.is_paid).length;
+  const totalWeekly = rules.filter(r => r.frequency === 'Weekly').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
+  const totalAnnually = rules.filter(r => r.frequency === 'Annually').reduce((s, r) => s + parseFloat(r.amount.toString()), 0);
+  const paidCount = rules.filter(r => r.is_paid).length;
 
   const inputStyle: React.CSSProperties = {
     background: 'rgba(237,246,249,0.8)',
@@ -146,35 +215,99 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
       {/* Add form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="mb-5 p-4 rounded-xl space-y-3 border" style={{ background: 'rgba(237,246,249,0.6)', borderColor: 'var(--pearlAqua)' }}>
+          {showAddExpense ? (
+            <div className="p-3 rounded-xl border-2 mb-3" style={{ background: 'rgba(237,246,249,0.5)', borderColor: 'var(--pearlAqua)' }}>
+              <label className="block text-xs font-bold mb-2" style={{ color: 'var(--stormyTeal)' }}>
+                ✨ Create Custom Expense Name
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={newExpenseInput}
+                  onChange={(e) => setNewExpenseInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomExpense())}
+                  className="flex-1 px-3 py-2 rounded-xl border-2 text-sm outline-none"
+                  style={inputStyle}
+                  placeholder="e.g. Guitar Lessons"
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddCustomExpense}
+                    disabled={savingExpense || !newExpenseInput.trim()}
+                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
+                    style={{ background: 'var(--stormyTeal)' }}
+                  >
+                    {savingExpense ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAddExpense(false); setNewExpenseInput(''); }}
+                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold border-2"
+                    style={{ background: 'white', color: 'var(--stormyTeal)', borderColor: 'var(--pearlAqua)' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2 relative mb-3">
+              <div className="flex-1 relative">
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="w-full h-full px-3 py-2.5 rounded-xl border-2 text-sm text-left flex items-center justify-between transition-all"
+                  style={inputStyle}
+                >
+                  <span className="truncate">{expenseName || 'Select expense'}</span>
+                  <ChevronDown className="w-4 h-4 opacity-50 flex-shrink-0 ml-2" />
+                </button>
+
+                {dropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                    <div className="absolute left-0 right-0 mt-2 py-2 rounded-xl border-2 shadow-xl z-20 max-h-60 overflow-y-auto" style={{ background: 'white', borderColor: 'var(--pearlAqua)' }}>
+                      {allExpenses.length === 0 && <div className="px-4 py-3 text-sm text-gray-500 text-center">No expenses available</div>}
+                      {allExpenses.map((c) => {
+                        const isPersonal = customExpenses.includes(c) && !globalExpenses.includes(c);
+                        return (
+                          <div key={c} className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 transition-colors group cursor-pointer" onClick={() => { setExpenseName(c); setDropdownOpen(false); }}>
+                            <span className="text-sm font-medium" style={{ color: 'var(--stormyTeal)' }}>{c}</span>
+                            {isPersonal && (
+                              <button type="button" onClick={(e) => { e.stopPropagation(); deleteCustomExpense(c); }} className="p-1.5 rounded-lg transition-all hover:bg-red-50 text-red-500 opacity-60 group-hover:opacity-100">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddExpense(true)}
+                title="Add custom expense"
+                className="w-11 h-11 flex items-center justify-center rounded-xl border-2 flex-shrink-0 transition-all hover:scale-105"
+                style={{ borderColor: 'var(--pearlAqua)', background: 'rgba(237,246,249,0.8)', color: 'var(--stormyTeal)' }}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          )}
           <input
-            type="text"
-            value={expenseName}
-            onChange={(e) => setExpenseName(e.target.value)}
+            type="number"
+            step="1"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
             className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none"
             style={inputStyle}
-            placeholder="Expense name (e.g., Netflix, Rent)"
+            placeholder="Amount (₹)"
             required
           />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              step="1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none"
-              style={inputStyle}
-              placeholder="Amount (₹)"
-              required
-            />
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border-2 text-sm outline-none"
-              style={inputStyle}
-            >
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <select
               value={frequency}

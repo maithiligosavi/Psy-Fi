@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   collection, addDoc,
   doc, onSnapshot, getDoc, setDoc, arrayUnion, updateDoc, arrayRemove
@@ -45,7 +45,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [unpaidWarning, setUnpaidWarning] = useState<string[]>([]);
+
 
   // ── Global & Personal settings ──────────────────────────────────────────
   const [globalCategories, setGlobalCategories]         = useState<string[]>([]);
@@ -136,8 +136,16 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsLoading, globalLoaded, personalLoaded]); 
 
-  const checkUnpaidFixed = () => {
-    if (!user || fixedRules.length === 0) return;
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const unpaidWarning = useMemo(() => {
+    if (!user || fixedRules.length === 0) return [];
     const now = new Date();
     const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const paidThisMonth = auditEntries
@@ -146,12 +154,8 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
     const unpaid = fixedRules.filter(
       (r) => !paidThisMonth.some((p) => p.includes(r.expense_name.toLowerCase()))
     );
-    setUnpaidWarning(unpaid.map((r) => r.expense_name));
-  };
-
-  useEffect(() => {
-    checkUnpaidFixed();
-  }, [auditEntries, fixedRules]);
+    return unpaid.map((r) => r.expense_name);
+  }, [user, auditEntries, fixedRules]);
 
   // ── Custom Category / Source Handlers ─────────────────────────────────────
   
@@ -277,7 +281,8 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
       setReason('');
       setMood('Neutral');
       setSourceOfPayment(allPaymentSources[0] ?? '');
-      setTimeout(() => setSuccess(false), 3000);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setSuccess(false), 3000);
       onEntryAdded();
 
     } catch (err) {
