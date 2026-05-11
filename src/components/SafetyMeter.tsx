@@ -5,11 +5,12 @@ import { formatINR } from '../lib/firebase';
 interface SafetyMeterProps {
   totalSpent: number;
   fixedExpenses: number;
+  paidFixedExpenses: number;
   totalBalance: number;
   safeBalance: number;
 }
 
-export default function SafetyMeter({ totalSpent, fixedExpenses, totalBalance, safeBalance }: SafetyMeterProps) {
+export default function SafetyMeter({ totalSpent, fixedExpenses, paidFixedExpenses, totalBalance, safeBalance }: SafetyMeterProps) {
   const [animatedValue, setAnimatedValue] = useState(0);
   const percentage   = Math.max(0, Math.min(100, (safeBalance / Math.max(totalBalance, 1)) * 100));
 
@@ -92,9 +93,10 @@ export default function SafetyMeter({ totalSpent, fixedExpenses, totalBalance, s
         {/* Breakdown */}
         <div className="w-full space-y-2.5">
           {[
-            { label: 'Total Balance',   value: formatINR(totalBalance),   sign: '',  valueColor: 'var(--stormyTeal)' },
-            { label: 'Fixed Expenses',  value: formatINR(fixedExpenses),  sign: '−', valueColor: 'var(--tangerineDream)' },
-            { label: 'Total Spent',     value: formatINR(totalSpent),     sign: '−', valueColor: '#d97706' },
+            { label: 'Total Balance',        value: formatINR(totalBalance),        sign: '',  valueColor: 'var(--stormyTeal)' },
+            { label: 'Fixed Expenses (total)',value: formatINR(fixedExpenses),       sign: '−', valueColor: 'var(--tangerineDream)' },
+            { label: 'Paid Fixed Spends',    value: formatINR(paidFixedExpenses),   sign: '−', valueColor: '#d97706' },
+            { label: 'Discretionary Spent',  value: formatINR(totalSpent),          sign: '−', valueColor: '#d97706' },
           ].map(({ label, value, sign, valueColor }) => (
             <div
               key={label}

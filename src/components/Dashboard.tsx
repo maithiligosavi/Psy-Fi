@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+
 import { useAuth } from '../hooks/useAuth';
 import { useBalance } from '../hooks/useBalance';
 import {
@@ -11,17 +11,14 @@ import SafetyMeter from './SafetyMeter';
 import BehavioralHistory from './BehavioralHistory';
 import FixedExpenses from './FixedExpenses';
 import ReportsDashboard from './ReportsDashboard';
-import { LogOut, Brain, Wallet, ShieldCheck, GitBranch, Pencil } from 'lucide-react';
+import { LogOut, Brain, Wallet, ShieldCheck, Pencil } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, profile, signOut } = useAuth();
-  const navigate  = useNavigate();
-  const location  = useLocation();
 
-  const [expensesList,  setExpensesList]  = useState<AuditEntry[]>([]);
-  const [totalSpent,    setTotalSpent]    = useState(0);
-  const [safeBalance,   setSafeBalance]   = useState(0);
-  const [fixedRules,    setFixedRules]    = useState<FixedRule[]>([]);
+  const [expensesList, setExpensesList] = useState<AuditEntry[]>([]);
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [fixedRules, setFixedRules] = useState<FixedRule[]>([]);
   
   const { initialBudget, currentBalance, updateInitialBudget } = useBalance();
 
@@ -53,8 +50,7 @@ export default function Dashboard() {
         
         // Update UI States immediately
         setExpensesList(expensesArray);
-        setTotalSpent((prev) => total);
-        setSafeBalance((prev) => initialBudget - total);
+        setTotalSpent(total);
       },
       (err) => console.error('expenses listener error:', err)
     );
@@ -80,13 +76,18 @@ export default function Dashboard() {
   }, [user]);
 
   // ── Derived values flowing to SafetyMeter ────────────────────────────────
-  const fixedExpenses = fixedRules.reduce((sum, r)   => sum + parseFloat(r.amount.toString()), 0);
+  // All fixed rules total (for display)
+  const fixedExpenses = fixedRules.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+  // Only PAID fixed rules reduce the safe balance
+  const paidFixedExpenses = fixedRules
+    .filter((r) => r.is_paid)
+    .reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
 
   const handleSignOut = async () => {
     try { await signOut(); } catch (e) { console.error(e); }
   };
 
-  const isChanges = location.pathname === '/changes';
+
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--aliceBlue)' }}>
@@ -127,31 +128,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Nav links */}
-            <div className="hidden sm:flex items-center gap-1">
-              <button
-                onClick={() => navigate('/')}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={
-                  !isChanges
-                    ? { background: 'rgba(255,255,255,0.18)', color: 'white' }
-                    : { background: 'transparent', color: 'rgba(255,255,255,0.65)' }
-                }
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => navigate('/changes')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={
-                  isChanges
-                    ? { background: 'rgba(255,255,255,0.18)', color: 'white' }
-                    : { background: 'transparent', color: 'rgba(255,255,255,0.65)' }
-                }
-              >
-                Changes
-              </button>
-            </div>
+
 
             {/* Right controls */}
             <div className="flex items-center gap-3">
@@ -246,8 +223,9 @@ export default function Dashboard() {
             <SafetyMeter
               totalSpent={totalSpent}
               fixedExpenses={fixedExpenses}
+              paidFixedExpenses={paidFixedExpenses}
               totalBalance={initialBudget}
-              safeBalance={safeBalance}
+              safeBalance={initialBudget - totalSpent - paidFixedExpenses}
             />
             {/* onUpdate is a no-op now — onSnapshot in both Dashboard and FixedExpenses handle it */}
             <FixedExpenses onUpdate={() => {}} />

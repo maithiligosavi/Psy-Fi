@@ -3,7 +3,7 @@ import { AuthProvider } from './hooks/useAuth';
 import { useAuth } from './hooks/useAuth';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
-import ChangesPage from './components/ChangesPage';
+
 import AdminRoute from './components/AdminRoute';
 import AdminDashboard from './components/AdminDashboard';
 import UserManagement from './components/UserManagement';
@@ -135,17 +135,7 @@ function AppRoutes() {
       {/* Root: auto-redirects admins → /admin, users → Dashboard */}
       <Route path="/" element={<RootRedirect />} />
 
-      {/* Private: custom-entry audit log (all users) */}
-      <Route
-        path="/changes"
-        element={
-          <PrivateRoute>
-            <ChangesPage />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Catch-all */}
+{/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

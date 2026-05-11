@@ -192,21 +192,21 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
 
       {/* Totals */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl p-3 border" style={{ background: '#fff7ed', borderColor: 'var(--tangerineDream)' }}>
+        <div className="rounded-xl p-3 border overflow-hidden" style={{ background: '#fff7ed', borderColor: 'var(--tangerineDream)' }}>
           <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--tangerineDream)' }}>Monthly</div>
-          <div className="text-lg font-extrabold" style={{ color: 'var(--tangerineDream)' }}>
+          <div className="text-base font-extrabold break-all leading-tight" style={{ color: 'var(--tangerineDream)' }}>
             {formatINR(totalMonthly)}
           </div>
         </div>
-        <div className="rounded-xl p-3 border" style={{ background: 'rgba(0,109,119,0.05)', borderColor: 'var(--pearlAqua)' }}>
+        <div className="rounded-xl p-3 border overflow-hidden" style={{ background: 'rgba(0,109,119,0.05)', borderColor: 'var(--pearlAqua)' }}>
           <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--stormyTeal)' }}>Weekly</div>
-          <div className="text-lg font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
+          <div className="text-base font-extrabold break-all leading-tight" style={{ color: 'var(--stormyTeal)' }}>
             {formatINR(totalWeekly)}
           </div>
         </div>
-        <div className="rounded-xl p-3 border" style={{ background: 'rgba(131,197,190,0.1)', borderColor: 'var(--pearlAqua)' }}>
+        <div className="rounded-xl p-3 border overflow-hidden" style={{ background: 'rgba(131,197,190,0.1)', borderColor: 'var(--pearlAqua)' }}>
           <div className="text-xs font-semibold mb-1 truncate" style={{ color: 'var(--stormyTeal)' }}>Annually</div>
-          <div className="text-lg font-extrabold" style={{ color: 'var(--stormyTeal)' }}>
+          <div className="text-base font-extrabold break-all leading-tight" style={{ color: 'var(--stormyTeal)' }}>
             {formatINR(totalAnnually)}
           </div>
         </div>
@@ -220,36 +220,34 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
               <label className="block text-xs font-bold mb-2" style={{ color: 'var(--stormyTeal)' }}>
                 ✨ Create Custom Expense Name
               </label>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-wrap gap-2">
                 <input
                   type="text"
                   value={newExpenseInput}
                   onChange={(e) => setNewExpenseInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomExpense())}
-                  className="flex-1 px-3 py-2 rounded-xl border-2 text-sm outline-none"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl border-2 text-sm outline-none"
                   style={inputStyle}
                   placeholder="e.g. Guitar Lessons"
                   autoFocus
                 />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAddCustomExpense}
-                    disabled={savingExpense || !newExpenseInput.trim()}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
-                    style={{ background: 'var(--stormyTeal)' }}
-                  >
-                    {savingExpense ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowAddExpense(false); setNewExpenseInput(''); }}
-                    className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-bold border-2"
-                    style={{ background: 'white', color: 'var(--stormyTeal)', borderColor: 'var(--pearlAqua)' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleAddCustomExpense}
+                  disabled={savingExpense || !newExpenseInput.trim()}
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 flex-shrink-0"
+                  style={{ background: 'var(--stormyTeal)' }}
+                >
+                  {savingExpense ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddExpense(false); setNewExpenseInput(''); }}
+                  className="px-4 py-2 rounded-xl text-sm font-bold border-2 flex-shrink-0"
+                  style={{ background: 'white', color: 'var(--stormyTeal)', borderColor: 'var(--pearlAqua)' }}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           ) : (
