@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useBalance } from '../hooks/useBalance';
 import {
-  collection, query, where, orderBy, onSnapshot,
+  collection, query, where, onSnapshot,
 } from 'firebase/firestore';
 import { db, AuditEntry, FixedRule, formatINR } from '../lib/firebase';
 import ExpenseTracker from './ExpenseTracker';
@@ -17,9 +16,8 @@ export default function Dashboard() {
   const { user, profile, signOut } = useAuth();
 
   const [expensesList, setExpensesList] = useState<AuditEntry[]>([]);
-  const [totalSpent, setTotalSpent] = useState(0);
   const [fixedRules, setFixedRules] = useState<FixedRule[]>([]);
-  
+
   const { initialBudget, currentBalance, updateInitialBudget } = useBalance();
 
   // ── 1. Real-time listener: expensesList ──────────────────────────────────
@@ -36,7 +34,7 @@ export default function Dashboard() {
       { includeMetadataChanges: true },
       (snapshot) => {
         console.log("Snapshot received:", snapshot.size);
-        
+
         const expensesArray = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -45,30 +43,27 @@ export default function Dashboard() {
         // Sort manually to avoid Firestore composite index requirement
         expensesArray.sort((a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime());
 
-        // Crucial: Wrap the expense amount in Number()
-        const total = expensesArray.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-        
-        // Update UI States immediately
         setExpensesList(expensesArray);
-        setTotalSpent(total);
       },
       (err) => console.error('expenses listener error:', err)
     );
 
     return () => unsubscribe();
   }, [user?.uid, initialBudget]);
+
   // ── 2. Real-time listener: fixed_rules ────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     const q = query(
       collection(db, 'fixed_rules'),
-      where('user_id', '==', user.uid),
-      orderBy('created_at', 'desc')
+      where('user_id', '==', user.uid)
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
-        setFixedRules(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule)));
+        const rulesArray = snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule));
+        rulesArray.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setFixedRules(rulesArray);
       },
       (err) => console.error('fixed_rules listener error:', err)
     );
@@ -76,18 +71,41 @@ export default function Dashboard() {
   }, [user]);
 
   // ── Derived values flowing to SafetyMeter ────────────────────────────────
-  // All fixed rules total (for display)
-  const fixedExpenses = fixedRules.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+  // Discretionary spending total
+  const rawTotalSpent = useMemo(() => {
+    return expensesList.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+  }, [expensesList]);
+
+  // All fixed rules total normalised to monthly equivalent (for display/reporting)
+  const normalizedFixedExpenses = useMemo(() => {
+    return fixedRules.reduce((sum, r) => {
+      const amount = Number(r.amount) || 0;
+      if (r.frequency === 'Weekly') return sum + (amount * 4);
+      if (r.frequency === 'Annually') return sum + (amount / 12);
+      return sum + amount; // Monthly
+    }, 0);
+  }, [fixedRules]);
+
+  // Raw sum of all fixed rules (for SafetyMeter display row)
+  const fixedExpenses = useMemo(() =>
+    fixedRules.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0),
+    [fixedRules]
+  );
+
   // Only PAID fixed rules reduce the safe balance
-  const paidFixedExpenses = fixedRules
-    .filter((r) => r.is_paid)
-    .reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0);
+  const paidFixedExpenses = useMemo(() =>
+    fixedRules
+      .filter((r) => r.is_paid)
+      .reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0),
+    [fixedRules]
+  );
+
+  const totalSpent = rawTotalSpent;
+  const safeBalance = initialBudget - rawTotalSpent - paidFixedExpenses;
 
   const handleSignOut = async () => {
     try { await signOut(); } catch (e) { console.error(e); }
   };
-
-
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--aliceBlue)' }}>
@@ -127,8 +145,6 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-
-
 
             {/* Right controls */}
             <div className="flex items-center gap-3">
@@ -211,7 +227,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* onEntryAdded is a no-op — onSnapshot handles real-time updates */}
             <ExpenseTracker
-              onEntryAdded={() => {}}
+              onEntryAdded={() => { }}
               fixedRules={fixedRules}
               auditEntries={expensesList}
             />
@@ -225,10 +241,10 @@ export default function Dashboard() {
               fixedExpenses={fixedExpenses}
               paidFixedExpenses={paidFixedExpenses}
               totalBalance={initialBudget}
-              safeBalance={initialBudget - totalSpent - paidFixedExpenses}
+              safeBalance={safeBalance}
             />
             {/* onUpdate is a no-op now — onSnapshot in both Dashboard and FixedExpenses handle it */}
-            <FixedExpenses onUpdate={() => {}} />
+            <FixedExpenses onUpdate={() => { }} />
           </div>
         </div>
       </main>

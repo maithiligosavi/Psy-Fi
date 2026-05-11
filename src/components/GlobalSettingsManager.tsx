@@ -10,11 +10,11 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Constants 
 
 const GLOBAL_SETTINGS_DOC = doc(db, 'global_settings', 'dropdown_options');
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types 
 
 interface GlobalSettings {
   categories: string[];
@@ -22,7 +22,7 @@ interface GlobalSettings {
   fixed_expenses: string[];
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Sub-components 
 
 function SectionHeader({ icon: Icon, title, subtitle }: {
   icon: React.ElementType; title: string; subtitle?: string;
@@ -127,15 +127,15 @@ function AddItemRow({ value, onChange, onAdd, adding, placeholder, successItem }
         {adding
           ? <Loader2 className="w-4 h-4 animate-spin" />
           : successItem
-          ? <Check className="w-4 h-4" />
-          : <Plus className="w-4 h-4" />}
+            ? <Check className="w-4 h-4" />
+            : <Plus className="w-4 h-4" />}
         {adding ? 'Adding…' : 'Add'}
       </button>
     </div>
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+// ── Main Component 
 
 export default function GlobalSettingsManager() {
   const { profile, signOut } = useAuth();
@@ -174,7 +174,7 @@ export default function GlobalSettingsManager() {
   const [lastAddedExpense, setLastAddedExpense] = useState<string | null>(null);
   const [removingExpense, setRemovingExpense] = useState<string | null>(null);
 
-  // ── Real-time listener on global_settings ──────────────────────────────────
+  // ── Real-time listener on global_settings 
   useEffect(() => {
     const unsub = onSnapshot(
       GLOBAL_SETTINGS_DOC,
@@ -201,12 +201,12 @@ export default function GlobalSettingsManager() {
     return () => unsub();
   }, []);
 
-  // ── Ensure doc exists before mutating ─────────────────────────────────────
+  // ── Ensure doc exists before mutating 
   const ensureDoc = async () => {
     await setDoc(GLOBAL_SETTINGS_DOC, {}, { merge: true });
   };
 
-  // ── Add Category ───────────────────────────────────────────────────────────
+  // ── Add Category 
   const handleAddCategory = async () => {
     const trimmed = newCategory.trim();
     if (!trimmed || addingCategory) return;
@@ -231,7 +231,7 @@ export default function GlobalSettingsManager() {
     }
   };
 
-  // ── Remove Category ────────────────────────────────────────────────────────
+  // ── Remove Category 
   const handleRemoveCategory = async (item: string) => {
     setRemovingCategory(item);
     setError('');
@@ -245,7 +245,7 @@ export default function GlobalSettingsManager() {
     }
   };
 
-  // ── Add Payment Source ─────────────────────────────────────────────────────
+  // ── Add Payment Source 
   const handleAddSource = async () => {
     const trimmed = newSource.trim();
     if (!trimmed || addingSource) return;
@@ -270,7 +270,7 @@ export default function GlobalSettingsManager() {
     }
   };
 
-  // ── Remove Payment Source ──────────────────────────────────────────────────
+  // ── Remove Payment Source 
   const handleRemoveSource = async (item: string) => {
     setRemovingSource(item);
     setError('');
@@ -284,7 +284,7 @@ export default function GlobalSettingsManager() {
     }
   };
 
-  // ── Add Fixed Expense ──────────────────────────────────────────────────────
+  // ── Add Fixed Expense 
   const handleAddExpense = async () => {
     const trimmed = newExpense.trim();
     if (!trimmed || addingExpense) return;
@@ -309,7 +309,7 @@ export default function GlobalSettingsManager() {
     }
   };
 
-  // ── Remove Fixed Expense ───────────────────────────────────────────────────
+  // ── Remove Fixed Expense 
   const handleRemoveExpense = async (item: string) => {
     setRemovingExpense(item);
     setError('');
@@ -327,7 +327,7 @@ export default function GlobalSettingsManager() {
     try { await signOut(); } catch (e) { console.error(e); }
   };
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // ── Loading 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--aliceBlue)' }}>
@@ -346,7 +346,7 @@ export default function GlobalSettingsManager() {
     );
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--aliceBlue)' }}>
 

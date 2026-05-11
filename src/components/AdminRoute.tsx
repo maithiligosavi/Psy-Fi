@@ -6,13 +6,7 @@ interface AdminRouteProps {
   children: ReactNode;
 }
 
-/**
- * AdminRoute — wraps any route that requires admin access.
- *
- * While auth is loading → shows the same spinner used in App.tsx.
- * If the user is not authenticated or not an admin → renders <Auth />.
- * If the user is an admin → renders children.
- */
+
 export default function AdminRoute({ children }: AdminRouteProps) {
   const { user, role, loading } = useAuth();
 

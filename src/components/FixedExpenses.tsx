@@ -23,16 +23,17 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
   const [frequency, setFrequency] = useState<'Weekly' | 'Monthly' | 'Annually'>('Monthly');
   const [dueDay, setDueDay] = useState('1');
 
-  // ── Real-time listener: rules update instantly without page refresh ──
+  // ── Real-time listener: rules update instantly without page refresh 
   useEffect(() => {
     if (!user) return;
     const q = query(
       collection(db, 'fixed_rules'),
-      where('user_id', '==', user.uid),
-      orderBy('created_at', 'desc')
+      where('user_id', '==', user.uid)
     );
     const unsubscribe = onSnapshot(q, (snap) => {
-      setRules(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule)));
+      const rulesArray = snap.docs.map((d) => ({ id: d.id, ...d.data() } as FixedRule));
+      rulesArray.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRules(rulesArray);
     });
     return () => unsubscribe();
   }, [user]);
@@ -137,13 +138,13 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
 
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, 'fixed_rules', id));
-    // onSnapshot handles the UI update automatically
+
     onUpdate();
   };
 
   const handleTogglePaid = async (rule: FixedRule) => {
     await updateDoc(doc(db, 'fixed_rules', rule.id), { is_paid: !rule.is_paid });
-    // onSnapshot handles the UI update automatically
+
     onUpdate();
   };
 
