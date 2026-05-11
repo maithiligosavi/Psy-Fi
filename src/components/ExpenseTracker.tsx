@@ -350,7 +350,7 @@ export default function ExpenseTracker({ onEntryAdded, fixedRules, auditEntries 
         {showAddCategory ? (
           <div className="p-4 rounded-xl border-2" style={{ background: 'rgba(237,246,249,0.5)', borderColor: 'var(--pearlAqua)' }}>
             <label className="block text-sm font-extrabold mb-3" style={{ color: 'var(--stormyTeal)' }}>
-              ✨ Create a Personal Category
+              Create a Personal Category
             </label>
             <div className="flex gap-2">
               <input

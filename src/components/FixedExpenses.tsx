@@ -219,7 +219,7 @@ export default function FixedExpenses({ onUpdate }: FixedExpensesProps) {
           {showAddExpense ? (
             <div className="p-3 rounded-xl border-2 mb-3" style={{ background: 'rgba(237,246,249,0.5)', borderColor: 'var(--pearlAqua)' }}>
               <label className="block text-xs font-bold mb-2" style={{ color: 'var(--stormyTeal)' }}>
-                ✨ Create Custom Expense Name
+                Create Custom Expense Name
               </label>
               <div className="flex flex-wrap gap-2">
                 <input
