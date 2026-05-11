@@ -40,12 +40,6 @@ function LoadingScreen() {
   );
 }
 
-/** Guard: redirects unauthenticated users to /auth */
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
-  return user ? <>{children}</> : <Navigate to="/auth" replace />;
-}
 
 /** Guard: redirects already-authenticated users away from /auth */
 function PublicRoute({ children }: { children: React.ReactNode }) {

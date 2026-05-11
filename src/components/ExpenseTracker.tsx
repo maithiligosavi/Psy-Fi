@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   collection, addDoc,
-  doc, onSnapshot, getDoc, setDoc, arrayUnion, updateDoc, arrayRemove
+  doc, onSnapshot, setDoc, arrayUnion, updateDoc, arrayRemove
 } from 'firebase/firestore';
 import { db, FixedRule, AuditEntry } from '../lib/firebase';
 import { analyseEntry } from '../lib/insightEngine';

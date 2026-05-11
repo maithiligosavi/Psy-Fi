@@ -4,8 +4,8 @@ import { db, Profile, AuditEntry } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import {
   Brain, Users, Receipt, TrendingUp, Smile, Meh, Frown,
-  TrendingDown, LogOut, ShieldCheck, BarChart3, UserCog,
-  RefreshCw, Ban,
+  TrendingDown, LogOut, ShieldCheck, BarChart3,
+  RefreshCw,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

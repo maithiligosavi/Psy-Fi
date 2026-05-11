@@ -4,8 +4,8 @@ import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 
 import { db, AuditEntry, formatINR } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import {
-  Brain, ArrowLeft, GitBranch, Tag, CreditCard,
-  SearchX, Sparkles, Pencil, Trash2, X, Check,
+  Brain, ArrowLeft, Tag, CreditCard,
+  SearchX, Sparkles, Pencil, Trash2, X, Check, RefreshCw,
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES = [

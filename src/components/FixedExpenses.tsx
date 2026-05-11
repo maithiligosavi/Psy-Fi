@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, setDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, onSnapshot, updateDoc, arrayUnion, arrayRemove, setDoc } from 'firebase/firestore';
 import { db, FixedRule, formatINR } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
 import { Calendar, Trash2, Plus, CheckCircle2, Circle, ChevronDown } from 'lucide-react';

@@ -76,16 +76,6 @@ export default function Dashboard() {
     return expensesList.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
   }, [expensesList]);
 
-  // All fixed rules total normalised to monthly equivalent (for display/reporting)
-  const normalizedFixedExpenses = useMemo(() => {
-    return fixedRules.reduce((sum, r) => {
-      const amount = Number(r.amount) || 0;
-      if (r.frequency === 'Weekly') return sum + (amount * 4);
-      if (r.frequency === 'Annually') return sum + (amount / 12);
-      return sum + amount; // Monthly
-    }, 0);
-  }, [fixedRules]);
-
   // Raw sum of all fixed rules (for SafetyMeter display row)
   const fixedExpenses = useMemo(() =>
     fixedRules.reduce((sum, r) => sum + parseFloat(r.amount.toString()), 0),

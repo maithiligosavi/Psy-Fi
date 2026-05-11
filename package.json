@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@google/genai": "^2.0.1",
     "@types/react-router-dom": "^5.3.3",
     "firebase": "^12.10.0",
     "lucide-react": "^0.344.0",
