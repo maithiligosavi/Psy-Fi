@@ -1,23 +1,23 @@
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+﻿# Environment & Secrets
 .env
+*.env
+.secrets.baseline
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Datasets & ML artifacts
+ml/eval_datasets/*
+!ml/eval_datasets/.gitkeep
+*.bin
+*.onnx
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
